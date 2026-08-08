@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, User as UserIcon, LogOut, QrCode, Edit2, Users, Bell, Check, X, Plane, CreditCard } from "lucide-react";
+import { ShieldCheck, User as UserIcon, LogOut, QrCode, Edit2, Users, Bell, Check, X, Plane, CreditCard, Sun, Moon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client"; 
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 
 interface DashboardHeaderProps {
   title: string;
@@ -43,6 +45,7 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+  const { theme, setTheme } = useTheme();
 
   // Robust case-insensitive check for Admin role
   const isAdmin = role?.trim().toLowerCase() === 'admin';
@@ -357,19 +360,32 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const pendingCount = notifications.length;
 
   return (
-    <div className="flex flex-row justify-between items-center gap-2 p-4 sm:p-6 border-b border-[#ff8c00] bg-[#111111]">
+    <div className="flex flex-row justify-between items-center gap-2 p-4 sm:p-6 border-b border-slate-200 dark:border-[#ff8c00] bg-white dark:bg-[#111111] transition-colors">
       <div className="min-w-0 flex-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{title}</h1>
-        <p className="text-xs sm:text-sm text-gray-400 font-medium tracking-wide uppercase truncate">
-          {role} • <span className="text-[#ff8c00]">{username}</span>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{title}</h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400 font-medium tracking-wide uppercase truncate">
+          {role} • <span className="text-orange-600 dark:text-[#ff8c00]">{username}</span>
         </p>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        {/* Theme Toggle Button */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="rounded-xl border-slate-200 dark:border-[#ff8c00]/30 bg-slate-50 dark:bg-[#222] text-orange-600 dark:text-[#ff8c00] hover:bg-orange-600 hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black transition h-10 w-10 p-0 flex items-center justify-center cursor-pointer shadow-sm"
+          title="Toggle Theme"
+        >
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 text-white hover:text-[#ff8c00] transition cursor-pointer"
+            className="relative p-2 text-slate-600 dark:text-white hover:text-orange-600 dark:hover:text-[#ff8c00] transition cursor-pointer"
           >
             <Bell size={22} />
             {pendingCount > 0 && (
@@ -381,10 +397,10 @@ export default function DashboardHeader({ title, role, username: initialUsername
           </button>
 
           {isNotificationsOpen && pendingCount > 0 && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-[#1a1a1a] border border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-4 text-white space-y-3">
-              <div className="flex justify-between items-center border-b border-[#ff8c00]/30 pb-3">
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-200 dark:border-[#ff8c00]/30 pb-3">
                 <h4 className="font-bold text-sm">Pending Approvals</h4>
-                <span className="text-xs bg-[#ff8c00]/10 text-[#ff8c00] border border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
+                <span className="text-xs bg-orange-500/10 text-orange-600 dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-orange-500/30 dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
                   {pendingCount} New
                 </span>
               </div>
@@ -394,26 +410,26 @@ export default function DashboardHeader({ title, role, username: initialUsername
                   const isVacation = notif.type === 'vacation';
                   
                   return (
-                    <div key={notif.id} className="bg-[#111] border border-[#333] p-3 rounded-xl space-y-2 text-xs">
-                      <div className="flex items-center gap-2 text-[#ff8c00]">
+                    <div key={notif.id} className="bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#333] p-3 rounded-xl space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-orange-600 dark:text-[#ff8c00]">
                         {isVacation ? <Plane size={14} /> : <CreditCard size={14} />}
-                        <span className="font-semibold text-white capitalize">{notif.type.replace('_', ' ')} Request</span>
-                        <span className="text-gray-500 text-[10px] ml-auto">{notif.email}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white capitalize">{notif.type.replace('_', ' ')} Request</span>
+                        <span className="text-slate-400 dark:text-gray-500 text-[10px] ml-auto">{notif.email}</span>
                       </div>
-                      <p className="text-gray-300">{notif.message}</p>
+                      <p className="text-slate-600 dark:text-gray-300">{notif.message}</p>
 
                       {notif.details?.receipt_url && notif.details.receipt_url !== "not applicable" && (
                         <a 
                           href={notif.details.receipt_url} 
                           target="_blank" 
                           rel="noreferrer" 
-                          className="text-[10px] text-blue-400 underline block"
+                          className="text-[10px] text-blue-500 dark:text-blue-400 underline block"
                         >
                           View Receipt Proof
                         </a>
                       )}
                       
-                      <div className="flex justify-end gap-2 pt-1 border-t border-[#222]">
+                      <div className="flex justify-end gap-2 pt-1 border-t border-slate-200 dark:border-[#222]">
                         <button 
                           onClick={() => handleReject(notif)}
                           className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
@@ -438,35 +454,35 @@ export default function DashboardHeader({ title, role, username: initialUsername
         <div className="relative" ref={menuRef}>
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="p-2 bg-[#1a1a1a] hover:bg-[#333333] rounded-xl transition-all border border-[#ff8c00] cursor-pointer flex items-center justify-center"
+            className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1a1a1a] dark:hover:bg-[#333333] rounded-xl transition-all border border-slate-200 dark:border-[#ff8c00] cursor-pointer flex items-center justify-center shadow-sm"
           >
             {isAdmin ? (
-              <ShieldCheck className="text-[#ff8c00]" size={22} />
+              <ShieldCheck className="text-orange-600 dark:text-[#ff8c00]" size={22} />
             ) : (
-              <UserIcon className="text-gray-400" size={22} />
+              <UserIcon className="text-slate-500 dark:text-gray-400" size={22} />
             )}
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-[#1a1a1a] border border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
-              <div className="px-4 py-3 border-b border-[#ff8c00]">
-                <p className="font-semibold text-white truncate">{username}</p>
-                <button onClick={handleEditUsername} className="text-xs text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
+            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-[#ff8c00]">
+                <p className="font-semibold text-slate-900 dark:text-white truncate">{username}</p>
+                <button onClick={handleEditUsername} className="text-xs text-orange-600 dark:text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
                   <Edit2 size={12} /> Edit Profile
                 </button>
               </div>
               
               <nav className="flex flex-col gap-1 mt-1">
                 {isAdmin && (
-                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                    <Users size={18} className="text-[#ff8c00]" /> User Management
+                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
+                    <Users size={18} className="text-orange-600 dark:text-[#ff8c00]" /> User Management
                   </button>
                 )}
                 
-                <button onClick={handleManageQR} className="flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                  <QrCode size={18} className="text-[#ff8c00]" /> Manage QR Code
+                <button onClick={handleManageQR} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
+                  <QrCode size={18} className="text-orange-600 dark:text-[#ff8c00]" /> Manage QR Code
                 </button>
-                <div className="h-px bg-[#ff8c00]/20 mx-4 my-1" />
+                <div className="h-px bg-slate-200 dark:bg-[#ff8c00]/20 mx-4 my-1" />
                 <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition cursor-pointer">
                   <LogOut size={18} /> Logout
                 </button>
