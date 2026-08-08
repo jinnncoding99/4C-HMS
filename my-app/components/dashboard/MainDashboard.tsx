@@ -7,8 +7,8 @@ import { Loader2, History, Plane, ChevronLeft, ChevronRight } from "lucide-react
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
 import { BillSummary } from "../billing/BillSummary";
-import ExpenseSummary from "@/components/expense/ExpenseSummary"; 
-import ExpenseForm from "@/components/expense/ExpenseForm";
+import {ExpenseSummary } from "../expense/ExpenseSummary"; 
+import {ExpenseForm }from "../expense/ExpenseForm";
 import RoleListenerModal from "@/components/RoleListenerModal";
 import HistoryTab from "@/components/dashboard/HistoryTab";
 import VacationSummaryModal from "@/components/dashboard/VacationSummaryModal";
