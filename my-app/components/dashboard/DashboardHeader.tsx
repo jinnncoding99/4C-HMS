@@ -51,7 +51,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const isAdmin = role?.trim().toLowerCase() === 'admin';
 
   useEffect(() => {
-    // If username wasn't passed via props immediately, fetch it
     if (!initialUsername) {
       const fetchUserData = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -381,7 +380,7 @@ export default function DashboardHeader({ title, role, username: initialUsername
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 text-slate-600 dark:text-gray-400 hover:text-[#4B49AC] dark:hover:text-[#4B49AC] transition cursor-pointer"
+            className="relative p-2 text-slate-600 dark:text-[#ff8c00] hover:text-[#4B49AC] dark:hover:text-[#ff8c00]/80 transition cursor-pointer"
           >
             <Bell size={22} />
             {pendingCount > 0 && (

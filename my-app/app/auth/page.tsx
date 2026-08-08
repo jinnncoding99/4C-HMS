@@ -119,18 +119,35 @@ export default function AuthPage() {
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Email</Label>
-              <Input name="email" type="email" placeholder="name@example.com" required className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-[#4B49AC]" />
+              <Input 
+                name="email" 
+                type="email" 
+                placeholder="name@example.com" 
+                required 
+                className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+              />
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Password</Label>
-              <Input name="password" type="password" placeholder="••••••••" required className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-[#4B49AC]" />
+              <Input 
+                name="password" 
+                type="password" 
+                placeholder="••••••••" 
+                required 
+                className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+              />
             </div>
             
             {!isLogin && (
               <div className="space-y-2">
                 <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Username</Label>
-                <Input name="username" placeholder="johndoe" required className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-[#4B49AC]" />
+                <Input 
+                  name="username" 
+                  placeholder="johndoe" 
+                  required 
+                  className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+                />
               </div>
             )}
 
