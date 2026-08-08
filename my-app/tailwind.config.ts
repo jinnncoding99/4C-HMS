@@ -11,12 +11,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // --- BRAND COLORS ---
         brand: {
-          orange: "#FF9000", // Signature vibrant orange
-          dark: "#000000",   // Signature deep black
+          orange: "#FF9000",
+          dark: "#000000",
         },
-        // --- EXISTING THEME COLORS ---
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -38,7 +36,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 };
 
 export default config;
