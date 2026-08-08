@@ -114,7 +114,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
       {/* Add Expense Modal */}
       {isAddFormOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/40 dark:bg-black/80 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-slate-200 dark:border-[#ff8c00] w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Add New Expense</h2>
             <ExpenseForm 
@@ -127,7 +127,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
       {/* History Modal */}
       {isHistoryModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/40 dark:bg-black/80 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-slate-200 dark:border-[#ff8c00] w-full max-w-4xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="mt-2">
               <HistoryTab onBack={() => setIsHistoryModalOpen(false)} />
@@ -138,7 +138,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
       {/* Vacation Summary Modal */}
       {isVacationModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/40 dark:bg-black/80 p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-slate-200 dark:border-[#ff8c00] w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="mt-2">
               <VacationSummaryModal onBack={() => setIsVacationModalOpen(false)} />
