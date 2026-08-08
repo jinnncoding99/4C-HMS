@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, History, Plane, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
-import BillingSummary from "./BillingSummary";
-import ExpenseSummary from "./ExpenseSummary"; 
-import ExpenseForm from "../expense/ExpenseForm";
+import { BillSummary } from "../billing/BillSummary";
+import ExpenseSummary from "@/components/expense/ExpenseSummary"; 
+import ExpenseForm from "@/components/expense/ExpenseForm";
 import RoleListenerModal from "@/components/RoleListenerModal";
 import HistoryTab from "@/components/dashboard/HistoryTab";
 import VacationSummaryModal from "@/components/dashboard/VacationSummaryModal";
@@ -21,9 +21,63 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const [isButtonsVisible, setIsButtonsVisible] = useState(true);
   const [profile, setProfile] = useState<{ username: string; id?: string; role?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Added states required by BillSummary (bills data, profiles, and payment requests)
+  const [profilesList, setProfilesList] = useState<any[]>([]);
+  const [bills, setBills] = useState<any[]>([]);
+  const [billSharesMap, setBillSharesMap] = useState<Record<string, any[]>>({});
+  const [userPaymentRequests, setUserPaymentRequests] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch profiles
+      const { data: profilesData } = await supabase.from("profiles").select("*");
+      if (profilesData) setProfilesList(profilesData);
+
+      // Fetch bills
+      const { data: billsData } = await supabase.from("bills").select("*").order("created_at", { ascending: false });
+      if (billsData) {
+        setBills(billsData);
+
+        // Fetch bill shares/breakdown for each bill
+        const sharesMap: Record<string, any[]> = {};
+        for (const bill of billsData) {
+          const { data: sharesData } = await supabase
+            .from("bill_shares")
+            .select("*, profiles(username)")
+            .eq("bill_id", bill.id);
+          
+          if (sharesData) {
+            sharesMap[bill.id] = sharesData.map((s: any) => ({
+              id: s.user_id,
+              username: s.profiles?.username || 'Unknown',
+              daysPresent: s.days_present || 0,
+              shareDue: s.share_due || 0,
+              paid_amount: s.paid_amount || 0,
+              status: s.status || 'unpaid',
+              isPaid: s.status === 'paid' || s.is_paid
+            }));
+          }
+        }
+        setBillSharesMap(sharesMap);
+      }
+
+      // Fetch payment requests
+      const { data: reqsData } = await supabase.from("payment_requests").select("*");
+      if (reqsData) setUserPaymentRequests(reqsData);
+
+    } catch (error) {
+      console.error("Error fetching billing data:", error);
+    }
+  };
 
   useEffect(() => {
     const initData = async () => {
@@ -47,6 +101,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
             });
           }
         }
+        await fetchData();
       } catch (err) {
         console.error("MainDashboard init error:", err);
       } finally {
@@ -57,6 +112,16 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   }, [supabase, role]);
 
   const handleCloseAddModal = () => setIsAddFormOpen(false);
+
+  const handleDeleteBill = async (billId: string) => {
+    try {
+      const { error } = await supabase.from("bills").delete().eq("id", billId);
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      console.error("Error deleting bill:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -168,7 +233,18 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
             
             <TabsContent value="bills" className="focus-visible:outline-none">
               <div className="w-full">
-                <BillingSummary userId={activeUserId} />
+                <BillSummary 
+                  userRole={userRole}
+                  currentUserId={activeUserId}
+                  userId={activeUserId}
+                  profiles={profilesList}
+                  bills={bills}
+                  billSharesMap={billSharesMap}
+                  userPaymentRequests={userPaymentRequests}
+                  isMounted={isMounted}
+                  fetchData={fetchData}
+                  deleteBill={handleDeleteBill}
+                />
               </div>
             </TabsContent>
 

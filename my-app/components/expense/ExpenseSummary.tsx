@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileText, PlusCircle } from "lucide-react";
-import ExpenseForm from "@/components/ExpenseForm"; // Adjust path if ExpenseForm is elsewhere
+import ExpenseForm from "./ExpenseForm"; // Adjust path if ExpenseForm is elsewhere
 import ExpenseCard from "./ExpenseCard";
 import { SettleModal, EditExpenseModal, PayShareModal } from "./ExpenseModals";
 

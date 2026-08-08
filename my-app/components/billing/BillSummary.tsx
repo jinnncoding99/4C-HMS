@@ -1,15 +1,14 @@
+// components/billing/BillSummary.tsx
+// components/billing/BillSummary.tsx
+'use client';
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 
-// Import your newly organized components from the same directory:
 import { BillCard } from './BillCard';
-import { PayModal } from './PayModal';
-import { ReceiverSettleModal } from './ReceiverSettleModal';
-import { AddBillDialog } from './AddBillDialog';
-import { EditBillModal } from './EditBillModal';
-import BillForm from './BillForm';
+import { AddBillDialog, EditBillModal } from './BillModals';
 
-export const MonthlyBilling = ({
+export const BillSummary = ({
   userRole,
   currentUserId,
   userId,
@@ -20,19 +19,16 @@ export const MonthlyBilling = ({
   isMounted,
   fetchData,
   deleteBill,
-  // ... other needed handlers & props
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedBills, setExpandedBills] = useState<Record<string, boolean>>({});
   
-  // Modals state
   const [selectedBillForPay, setSelectedBillForPay] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cash'>('online');
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // New states for Editing & Receiver Settlement modals
   const [editingBill, setEditingBill] = useState<any>(null);
   const [settlingBill, setSettlingBill] = useState<any>(null);
   const [settleMethod, setSettleMethod] = useState<'cash' | 'online'>('cash');
@@ -61,7 +57,7 @@ export const MonthlyBilling = ({
   };
 
   const handleReceiverSettleSubmit = async () => {
-    // your receiver settlement submit logic here using settlingBill, settleMethod, settleReceiptFile...
+    // your receiver settlement submit logic here...
   };
 
   const displayBills = bills.filter((bill: any) => {
@@ -92,13 +88,11 @@ export const MonthlyBilling = ({
               <p className="text-sm text-gray-400">Track and manage utility bills with manual settlement clearance.</p>
             </div>
             
-            {/* Cleanly integrated AddBillDialog component */}
             {isAdmin && (
               <AddBillDialog 
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
                 onSuccess={fetchData}
-                BillFormComponent={BillForm}
               />
             )}
           </div>
@@ -134,7 +128,6 @@ export const MonthlyBilling = ({
         </div>
       </Card>
 
-      {/* Member Payment Modal */}
       <PayModal
         isOpen={!!selectedBillForPay}
         onClose={() => setSelectedBillForPay(null)}
@@ -147,15 +140,12 @@ export const MonthlyBilling = ({
         onSubmit={submitPaymentRequest}
       />
 
-      {/* Edit Bill Modal Component */}
       <EditBillModal
         editingBill={editingBill}
         onClose={() => setEditingBill(null)}
         onSuccess={fetchData}
-        BillFormComponent={BillForm}
       />
 
-      {/* Receiver Full Bill Settlement Modal Component */}
       <ReceiverSettleModal
         settlingBill={settlingBill}
         settleMethod={settleMethod}

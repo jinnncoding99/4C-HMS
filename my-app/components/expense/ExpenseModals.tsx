@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QrCode } from "lucide-react";
-import ExpenseForm from "@/components/ExpenseForm"; // Adjust path if ExpenseForm is located elsewhere
+import ExpenseForm from "./ExpenseForm";
 
 export function SettleModal({
   settlingExpense,
