@@ -10,20 +10,20 @@ const DialogTrigger = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
 >(({ ...props }, ref) => (
-  // We remove 'asChild' from props if it was passed, 
-  // though typically 'asChild' is handled by the DialogPrimitive.Trigger itself.
-  // This structure ensures no unknown props are spread to the DOM.
   <DialogPrimitive.Trigger ref={ref} {...props} />
 ))
 DialogTrigger.displayName = DialogPrimitive.Trigger.displayName
 
 const DialogPortal = ({
   className,
+  children,
   ...props
-}: DialogPrimitive.DialogPortalProps) => (
-  <DialogPrimitive.Portal className={cn(className)} {...props} />
+}: DialogPrimitive.DialogPortalProps & { className?: string }) => (
+  <DialogPrimitive.Portal {...props}>
+    <div className={cn(className)}>{children}</div>
+  </DialogPrimitive.Portal>
 )
-DialogPortal.displayName = DialogPrimitive.DialogPortal.displayName
+DialogPortal.displayName = DialogPrimitive.Portal.displayName
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
