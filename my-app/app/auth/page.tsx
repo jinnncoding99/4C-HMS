@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Lock, Building2 } from "lucide-react";
+import { Loader2, Lock, Building2, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,6 +20,7 @@ export default function AuthPage() {
   const router = useRouter();
   const { setUsername } = useUser();
   const supabase = createClient();
+  const { theme, setTheme } = useTheme();
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -61,14 +63,14 @@ export default function AuthPage() {
 
   if (isPending) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-zinc-950 px-4 relative overflow-hidden">
+      <div className="flex justify-center items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
         <div className="absolute w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <Card className="w-full max-w-md p-8 text-center border-zinc-800 bg-zinc-900/50 backdrop-blur-xl shadow-2xl z-10">
-          <div className="mx-auto w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-4 text-orange-500">
+        <Card className="w-full max-w-md p-8 text-center border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl shadow-2xl z-10">
+          <div className="mx-auto w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-4 text-orange-600 dark:text-orange-500">
             <Lock className="w-6 h-6" />
           </div>
-          <CardTitle className="text-white text-xl mb-2">Check your email</CardTitle>
-          <p className="text-sm text-zinc-400">
+          <CardTitle className="text-zinc-900 dark:text-white text-xl mb-2">Check your email</CardTitle>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             A verification link has been sent to your email. Please click it to activate your account.
           </p>
         </Card>
@@ -77,58 +79,72 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-zinc-950 px-4 relative overflow-hidden">
+    <div className="flex flex-col justify-center items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
+      {/* Theme Toggle Button in Top Corner */}
+      <div className="absolute top-6 right-6 z-20">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="rounded-full border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-sm"
+        >
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
+
       {/* Background ambient glow effect */}
       <div className="absolute w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* App Logo & Branding Header */}
       <div className="mb-6 text-center z-10 flex flex-col items-center">
-        <div className="w-12 h-12 rounded-xl bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-500 mb-3 shadow-lg shadow-orange-950">
+        <div className="w-12 h-12 rounded-xl bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-600 dark:text-orange-500 mb-3 shadow-lg shadow-orange-950/20">
           <Building2 className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Brd 4C Management System</h1>
-        <p className="text-sm text-zinc-400 mt-1">Please sign in to continue</p>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">Brd 4C Management System</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Please sign in to continue</p>
       </div>
 
-      <Card className="w-full max-w-md border-zinc-800 bg-zinc-900/50 backdrop-blur-xl shadow-2xl z-10">
+      <Card className="w-full max-w-md border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl shadow-2xl z-10">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-xl text-white font-semibold">
+          <CardTitle className="text-xl text-zinc-900 dark:text-white font-semibold">
             {isLogin ? "Welcome back" : "Create an account"}
           </CardTitle>
-          <CardDescription className="text-zinc-400">
+          <CardDescription className="text-zinc-500 dark:text-zinc-400">
             {isLogin ? "Enter your credentials to access your dashboard" : "Fill in the details below to get started"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs text-zinc-300">Email</Label>
-              <Input name="email" type="email" placeholder="name@example.com" required className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
+              <Label className="text-xs text-zinc-700 dark:text-zinc-300">Email</Label>
+              <Input name="email" type="email" placeholder="name@example.com" required className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus-visible:ring-orange-500" />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-zinc-300">Password</Label>
-              <Input name="password" type="password" placeholder="••••••••" required className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
+              <Label className="text-xs text-zinc-700 dark:text-zinc-300">Password</Label>
+              <Input name="password" type="password" placeholder="••••••••" required className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus-visible:ring-orange-500" />
             </div>
             
             {!isLogin && (
               <div className="space-y-2">
-                <Label className="text-xs text-zinc-300">Username</Label>
-                <Input name="username" placeholder="johndoe" required className="bg-zinc-950 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
+                <Label className="text-xs text-zinc-700 dark:text-zinc-300">Username</Label>
+                <Input name="username" placeholder="johndoe" required className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus-visible:ring-orange-500" />
               </div>
             )}
 
             {!isLogin && (
               <div className="space-y-2 pt-1">
-                <Label className="text-xs text-zinc-300">Select Role</Label>
+                <Label className="text-xs text-zinc-700 dark:text-zinc-300">Select Role</Label>
                 <RadioGroup name="role" defaultValue="boarder" className="flex gap-6 pt-1">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" className="border-zinc-700 text-orange-500" />
-                    <Label htmlFor="admin" className="text-sm text-zinc-300 cursor-pointer">Admin</Label>
+                    <RadioGroupItem value="admin" id="admin" className="border-zinc-300 dark:border-zinc-700 text-orange-600 dark:text-orange-500" />
+                    <Label htmlFor="admin" className="text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">Admin</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="boarder" id="boarder" className="border-zinc-700 text-orange-500" />
-                    <Label htmlFor="boarder" className="text-sm text-zinc-300 cursor-pointer">Boarder</Label>
+                    <RadioGroupItem value="boarder" id="boarder" className="border-zinc-300 dark:border-zinc-700 text-orange-600 dark:text-orange-500" />
+                    <Label htmlFor="boarder" className="text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">Boarder</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -149,7 +165,7 @@ export default function AuthPage() {
           <div className="mt-4 text-center">
             <Button 
               variant="ghost" 
-              className="text-xs text-zinc-400 hover:text-white hover:bg-transparent p-0 h-auto" 
+              className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-transparent p-0 h-auto" 
               onClick={() => setIsLogin(!isLogin)}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
