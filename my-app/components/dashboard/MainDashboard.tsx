@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
 import BillingSummary from "./BillingSummary";
 import ExpenseSummary from "./ExpenseSummary"; 
-import ExpenseForm from "./ExpenseForm";
+import ExpenseForm from "../expense/ExpenseForm";
 import RoleListenerModal from "@/components/RoleListenerModal";
 import HistoryTab from "@/components/dashboard/HistoryTab";
 import VacationSummaryModal from "@/components/dashboard/VacationSummaryModal";

@@ -236,12 +236,8 @@ export default function DashboardHeader({ title, role, username: initialUsername
                 const { error: historyError } = await supabase
                   .from('transaction_history')
                   .insert({
-                    original_bill_id: parentData.id,
                     description: parentData.description,
                     total_amount: parentData.total_amount,
-                    billing_period_start: parentData.billing_period_start,
-                    billing_period_end: parentData.billing_period_end,
-                    calculation_type: parentData.calculation_type,
                     settled_at: new Date().toISOString()
                   });
 

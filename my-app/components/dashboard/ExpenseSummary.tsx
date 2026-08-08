@@ -11,7 +11,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
-import ExpenseForm from "./ExpenseForm";
+import ExpenseForm from "../expense/ExpenseForm";
 import { createClient } from "@/lib/supabase/client";
 import { QrCode, ChevronDown, ChevronUp, Edit, Trash2, PlusCircle, CheckCircle, FileText, Clock } from "lucide-react";
 

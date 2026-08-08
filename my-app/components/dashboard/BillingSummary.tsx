@@ -10,7 +10,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
-import BillForm from "./BillForm";
+import BillForm from "../billing/BillForm";
 import { createClient } from "@/lib/supabase/client";
 import { QrCode, ChevronDown, ChevronUp, Edit, Trash2, PlusCircle, CheckCircle } from "lucide-react";
 

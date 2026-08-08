@@ -13,7 +13,7 @@ interface ExpenseItem {
   category?: string;
   payment_receiver_id?: string | null;
   receipt_url?: string | null;
-  expense_date?: string | null; // Fixed: allows null to match parent component types
+  expense_date?: string | null;
 }
 
 interface Profile {

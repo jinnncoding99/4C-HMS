@@ -64,9 +64,9 @@ export default function AuthPage() {
   if (isPending) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-[#F0F2F5] dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
-        <div className="absolute w-[500px] h-[500px] bg-[#7DA0FA]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute w-[500px] h-[500px] bg-[#7DA0FA]/10 dark:bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
         <Card className="w-full max-w-md p-8 text-center border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-xl shadow-xl z-10">
-          <div className="mx-auto w-12 h-12 rounded-full bg-[#4B49AC]/10 flex items-center justify-center mb-4 text-[#4B49AC] dark:text-orange-500">
+          <div className="mx-auto w-12 h-12 rounded-full bg-[#4B49AC]/10 dark:bg-orange-500/10 flex items-center justify-center mb-4 text-[#4B49AC] dark:text-orange-500">
             <Lock className="w-6 h-6" />
           </div>
           <CardTitle className="text-slate-900 dark:text-white text-xl mb-2">Check your email</CardTitle>
@@ -167,7 +167,11 @@ export default function AuthPage() {
               </div>
             )}
 
-            <Button type="submit" disabled={isLoading} className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 text-white font-medium mt-2 transition-all shadow-md shadow-[#4B49AC]/20">
+            <Button 
+              type="submit" 
+              disabled={isLoading} 
+              className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-orange-600 dark:hover:bg-orange-600/90 text-white font-medium mt-2 transition-all shadow-md shadow-[#4B49AC]/20 dark:shadow-orange-600/20"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
