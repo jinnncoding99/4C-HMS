@@ -162,7 +162,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
           const foreignKeyName = isExpenseEntry ? 'expense_id' : 'bill_id';
           const userKeyName = isExpenseEntry ? 'user_id' : 'boarder_id';
 
-          // 1. Fetch the payer's existing share row using shared_amount
           const { data: payerShare } = await supabase
             .from(tableName)
             .select('*')
@@ -174,7 +173,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
             const currentSharedAmount = Number(payerShare.shared_amount || 0);
             const currentPaidAmount = Number(payerShare.paid_amount || 0);
 
-            // Deduct payment from the payer's shared_amount, making it approach 0, and add to paid_amount
             const newSharedAmount = Math.max(0, currentSharedAmount - paymentAmount);
             const newPaidAmount = currentPaidAmount + paymentAmount;
             const isFullyPaidForUser = newSharedAmount === 0;
@@ -193,7 +191,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
             if (shareError) throw shareError;
           }
 
-          // 2. Add the payment amount to the receiver's shared_amount so total liability remains conserved
           if (receiverId) {
             const { data: receiverShare } = await supabase
               .from(tableName)
@@ -216,7 +213,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
             }
           }
 
-          // 3. Check if all individual shares are settled completely
           const { data: allShares, error: fetchSharesError } = await supabase
             .from(tableName)
             .select('*')
@@ -360,11 +356,11 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const pendingCount = notifications.length;
 
   return (
-    <div className="flex flex-row justify-between items-center gap-2 p-4 sm:p-6 border-b border-slate-200 dark:border-[#ff8c00] bg-white dark:bg-[#111111] transition-colors">
+    <div className="flex flex-row justify-between items-center gap-2 p-4 sm:p-6 border-b border-[#98BDFF]/60 dark:border-[#ff8c00] bg-white dark:bg-[#111111] transition-colors">
       <div className="min-w-0 flex-1">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{title}</h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400 font-medium tracking-wide uppercase truncate">
-          {role} • <span className="text-orange-600 dark:text-[#ff8c00]">{username}</span>
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-400 font-medium tracking-wide uppercase truncate">
+          {role} • <span className="text-[#4B49AC] dark:text-[#ff8c00]">{username}</span>
         </p>
       </div>
 
@@ -374,7 +370,7 @@ export default function DashboardHeader({ title, role, username: initialUsername
           variant="outline"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="rounded-xl border-slate-200 dark:border-[#ff8c00]/30 bg-slate-50 dark:bg-[#222] text-orange-600 dark:text-[#ff8c00] hover:bg-orange-600 hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black transition h-10 w-10 p-0 flex items-center justify-center cursor-pointer shadow-sm"
+          className="rounded-xl border-[#98BDFF] dark:border-[#ff8c00]/30 bg-[#F0F2F5]/60 dark:bg-[#222] text-[#4B49AC] dark:text-[#ff8c00] hover:bg-[#4B49AC] hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black transition h-10 w-10 p-0 flex items-center justify-center cursor-pointer shadow-sm"
           title="Toggle Theme"
         >
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -385,7 +381,7 @@ export default function DashboardHeader({ title, role, username: initialUsername
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 text-slate-600 dark:text-white hover:text-orange-600 dark:hover:text-[#ff8c00] transition cursor-pointer"
+            className="relative p-2 text-slate-600 dark:text-gray-400 hover:text-[#4B49AC] dark:hover:text-[#4B49AC] transition cursor-pointer"
           >
             <Bell size={22} />
             {pendingCount > 0 && (
@@ -397,10 +393,10 @@ export default function DashboardHeader({ title, role, username: initialUsername
           </button>
 
           {isNotificationsOpen && pendingCount > 0 && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3">
-              <div className="flex justify-between items-center border-b border-slate-200 dark:border-[#ff8c00]/30 pb-3">
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3">
+              <div className="flex justify-between items-center border-b border-[#7DA0FA]/40 dark:border-[#ff8c00]/30 pb-3">
                 <h4 className="font-bold text-sm">Pending Approvals</h4>
-                <span className="text-xs bg-orange-500/10 text-orange-600 dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-orange-500/30 dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
+                <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-[#98BDFF] dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
                   {pendingCount} New
                 </span>
               </div>
@@ -410,20 +406,20 @@ export default function DashboardHeader({ title, role, username: initialUsername
                   const isVacation = notif.type === 'vacation';
                   
                   return (
-                    <div key={notif.id} className="bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#333] p-3 rounded-xl space-y-2 text-xs">
-                      <div className="flex items-center gap-2 text-orange-600 dark:text-[#ff8c00]">
+                    <div key={notif.id} className="bg-[#F0F2F5]/60 dark:bg-[#111] border border-[#98BDFF]/50 dark:border-[#333] p-3 rounded-xl space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-[#4B49AC] dark:text-[#ff8c00]">
                         {isVacation ? <Plane size={14} /> : <CreditCard size={14} />}
                         <span className="font-semibold text-slate-900 dark:text-white capitalize">{notif.type.replace('_', ' ')} Request</span>
-                        <span className="text-slate-400 dark:text-gray-500 text-[10px] ml-auto">{notif.email}</span>
+                        <span className="text-slate-500 dark:text-gray-500 text-[10px] ml-auto">{notif.email}</span>
                       </div>
-                      <p className="text-slate-600 dark:text-gray-300">{notif.message}</p>
+                      <p className="text-slate-700 dark:text-gray-300">{notif.message}</p>
 
                       {notif.details?.receipt_url && notif.details.receipt_url !== "not applicable" && (
                         <a 
                           href={notif.details.receipt_url} 
                           target="_blank" 
                           rel="noreferrer" 
-                          className="text-[10px] text-blue-500 dark:text-blue-400 underline block"
+                          className="text-[10px] text-blue-600 dark:text-blue-400 underline block"
                         >
                           View Receipt Proof
                         </a>
@@ -432,13 +428,13 @@ export default function DashboardHeader({ title, role, username: initialUsername
                       <div className="flex justify-end gap-2 pt-1 border-t border-slate-200 dark:border-[#222]">
                         <button 
                           onClick={() => handleReject(notif)}
-                          className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                          className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
                         >
                           <X size={12} className="mr-1" /> Reject
                         </button>
                         <button 
                           onClick={() => handleApprove(notif)}
-                          className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                          className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
                         >
                           <Check size={12} className="mr-1" /> Approve
                         </button>
@@ -454,36 +450,36 @@ export default function DashboardHeader({ title, role, username: initialUsername
         <div className="relative" ref={menuRef}>
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1a1a1a] dark:hover:bg-[#333333] rounded-xl transition-all border border-slate-200 dark:border-[#ff8c00] cursor-pointer flex items-center justify-center shadow-sm"
+            className="p-2 bg-[#F0F2F5] hover:bg-slate-200 dark:bg-[#1a1a1a] dark:hover:bg-[#333333] rounded-xl transition-all border border-[#98BDFF] dark:border-[#ff8c00] cursor-pointer flex items-center justify-center shadow-sm"
           >
             {isAdmin ? (
-              <ShieldCheck className="text-orange-600 dark:text-[#ff8c00]" size={22} />
+              <ShieldCheck className="text-[#4B49AC] dark:text-[#ff8c00]" size={22} />
             ) : (
-              <UserIcon className="text-slate-500 dark:text-gray-400" size={22} />
+              <UserIcon className="text-slate-600 dark:text-gray-400" size={22} />
             )}
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
-              <div className="px-4 py-3 border-b border-slate-200 dark:border-[#ff8c00]">
+            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
+              <div className="px-4 py-3 border-b border-[#7DA0FA]/40 dark:border-[#ff8c00]">
                 <p className="font-semibold text-slate-900 dark:text-white truncate">{username}</p>
-                <button onClick={handleEditUsername} className="text-xs text-orange-600 dark:text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
+                <button onClick={handleEditUsername} className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
                   <Edit2 size={12} /> Edit Profile
                 </button>
               </div>
               
               <nav className="flex flex-col gap-1 mt-1">
                 {isAdmin && (
-                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                    <Users size={18} className="text-orange-600 dark:text-[#ff8c00]" /> User Management
+                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-[#F0F2F5] dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
+                    <Users size={18} className="text-[#4B49AC] dark:text-[#ff8c00]" /> User Management
                   </button>
                 )}
                 
-                <button onClick={handleManageQR} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                  <QrCode size={18} className="text-orange-600 dark:text-[#ff8c00]" /> Manage QR Code
+                <button onClick={handleManageQR} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-[#F0F2F5] dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
+                  <QrCode size={18} className="text-[#4B49AC] dark:text-[#ff8c00]" /> Manage QR Code
                 </button>
-                <div className="h-px bg-slate-200 dark:bg-[#ff8c00]/20 mx-4 my-1" />
-                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 rounded-xl transition cursor-pointer">
+                <div className="h-px bg-[#7DA0FA]/30 dark:bg-[#ff8c00]/20 mx-4 my-1" />
+                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 rounded-xl transition cursor-pointer">
                   <LogOut size={18} /> Logout
                 </button>
               </nav>
