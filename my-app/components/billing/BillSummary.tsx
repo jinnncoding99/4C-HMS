@@ -122,7 +122,7 @@ export const BillSummary = ({
   return (
     <div className="w-full space-y-6 text-slate-900 dark:text-zinc-100">
       <Card className="bg-white dark:bg-[#18181b] border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 shadow-xl overflow-hidden rounded-xl transition-colors">
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-zinc-800/80 pb-5">
             <div>
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
@@ -145,34 +145,34 @@ export const BillSummary = ({
           </div>
 
           {/* Top Summary Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500">
-                <Clock className="h-5 w-5" />
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 shrink-0">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Active Bills Count</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{activeBillsCount}</p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <Wallet className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Pending Collection</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalPendingCollection.toFixed(2)}</p>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Active Bills</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">{activeBillsCount}</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-green-400">
-                <CheckCircle2 className="h-5 w-5" />
+            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-400 shrink-0">
+                <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Collected</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalCollected.toFixed(2)}</p>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Pending Collection</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">₱{totalPendingCollection.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="col-span-2 lg:col-span-1 p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-green-400 shrink-0">
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Total Collected</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">₱{totalCollected.toFixed(2)}</p>
               </div>
             </div>
           </div>

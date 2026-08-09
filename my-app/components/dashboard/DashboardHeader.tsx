@@ -44,7 +44,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const notifRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // Robust case-insensitive check for Admin role
   const isAdmin = role?.trim().toLowerCase() === 'admin';
 
   useEffect(() => {
@@ -348,72 +347,83 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const pendingCount = notifications.length;
 
   return (
-    <div className="flex flex-row justify-between items-center gap-2 p-4 sm:p-6 border-b border-[#98BDFF]/60 dark:border-[#ff8c00] bg-white dark:bg-[#111111] transition-colors">
-      <div className="min-w-0 flex-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{title}</h1>
-        <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-400 font-medium tracking-wide uppercase truncate">
-          {role} • <span className="text-[#4B49AC] dark:text-[#ff8c00]">{username}</span>
+    <header className="flex flex-row justify-between items-center gap-4 px-6 py-4 border-b border-[#98BDFF]/40 dark:border-[#ff8c00]/30 bg-white dark:bg-[#18181b] transition-colors shadow-sm">
+      {/* Left Title & Profile Role Info */}
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">{title}</h1>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#4B49AC]/15 text-[#4B49AC] dark:bg-[#ff8c00]/15 dark:text-[#ff8c00]">
+            {role}
+          </span>
+        </div>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
+          Welcome back, <span className="font-semibold text-slate-700 dark:text-zinc-200">{username}</span>
         </p>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+      {/* Right Actions */}
+      <div className="flex items-center gap-3 shrink-0">
+        
+        {/* Notifications Dropdown Container */}
         <div className="relative" ref={notifRef}>
           <button 
+            type="button"
+            aria-label="Toggle Notifications"
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2 text-slate-600 dark:text-[#ff8c00] hover:text-[#4B49AC] dark:hover:text-[#ff8c00]/80 transition cursor-pointer"
+            className="relative p-2.5 rounded-xl text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition-all cursor-pointer"
           >
-            <Bell size={22} />
+            <Bell size={20} />
             {pendingCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-3 w-3">
+              <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
               </span>
             )}
           </button>
 
           {isNotificationsOpen && pendingCount > 0 && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3">
-              <div className="flex justify-between items-center border-b border-[#7DA0FA]/40 dark:border-[#ff8c00]/30 pb-3">
+            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3 animate-in fade-in zoom-in duration-200">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800 pb-3">
                 <h4 className="font-bold text-sm">Pending Approvals</h4>
-                <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-[#98BDFF] dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
+                <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-[#98BDFF]/30 dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
                   {pendingCount} New
                 </span>
               </div>
 
-              <div className="space-y-2 max-h-[350px] overflow-y-auto">
+              <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
                 {notifications.map((notif) => {
                   const isVacation = notif.type === 'vacation';
                   
                   return (
-                    <div key={notif.id} className="bg-[#F0F2F5]/60 dark:bg-[#111] border border-[#98BDFF]/50 dark:border-[#333] p-3 rounded-xl space-y-2 text-xs">
+                    <div key={notif.id} className="bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-3 rounded-xl space-y-2 text-xs">
                       <div className="flex items-center gap-2 text-[#4B49AC] dark:text-[#ff8c00]">
                         {isVacation ? <Plane size={14} /> : <CreditCard size={14} />}
                         <span className="font-semibold text-slate-900 dark:text-white capitalize">{notif.type.replace('_', ' ')} Request</span>
-                        <span className="text-slate-500 dark:text-gray-500 text-[10px] ml-auto">{notif.email}</span>
+                        <span className="text-slate-400 dark:text-zinc-500 text-[10px] ml-auto">{notif.email}</span>
                       </div>
-                      <p className="text-slate-700 dark:text-gray-300">{notif.message}</p>
+                      <p className="text-slate-600 dark:text-zinc-300 leading-relaxed">{notif.message}</p>
 
                       {notif.details?.receipt_url && notif.details.receipt_url !== "not applicable" && (
                         <a 
                           href={notif.details.receipt_url} 
                           target="_blank" 
                           rel="noreferrer" 
-                          className="text-[10px] text-blue-600 dark:text-blue-400 underline block"
+                          className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline block"
                         >
-                          View Receipt Proof
+                          View Receipt Proof →
                         </a>
                       )}
                       
-                      <div className="flex justify-end gap-2 pt-1 border-t border-slate-200 dark:border-[#222]">
+                      <div className="flex justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-zinc-800">
                         <button 
                           onClick={() => handleReject(notif)}
-                          className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                          className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
                         >
                           <X size={12} className="mr-1" /> Reject
                         </button>
                         <button 
                           onClick={() => handleApprove(notif)}
-                          className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/30 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                          className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
                         >
                           <Check size={12} className="mr-1" /> Approve
                         </button>
@@ -426,22 +436,25 @@ export default function DashboardHeader({ title, role, username: initialUsername
           )}
         </div>
 
+        {/* User Profile Menu Dropdown Container */}
         <div className="relative" ref={menuRef}>
           <button 
+            type="button"
+            aria-label="User Profile Menu"
             onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="p-2 bg-[#F0F2F5] hover:bg-slate-200 dark:bg-[#1a1a1a] dark:hover:bg-[#333333] rounded-xl transition-all border border-[#98BDFF] dark:border-[#ff8c00] cursor-pointer flex items-center justify-center shadow-sm"
+            className="p-2.5 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-xl transition-all border border-slate-200 dark:border-zinc-800 cursor-pointer flex items-center justify-center shadow-sm"
           >
             {isAdmin ? (
-              <ShieldCheck className="text-[#4B49AC] dark:text-[#ff8c00]" size={22} />
+              <ShieldCheck className="text-[#4B49AC] dark:text-[#ff8c00]" size={20} />
             ) : (
-              <UserIcon className="text-slate-600 dark:text-gray-400" size={22} />
+              <UserIcon className="text-slate-600 dark:text-zinc-400" size={20} />
             )}
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] rounded-2xl shadow-xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
-              <div className="px-4 py-3 border-b border-[#7DA0FA]/40 dark:border-[#ff8c00]">
-                <p className="font-semibold text-slate-900 dark:text-white truncate">{username}</p>
+            <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
+                <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{username}</p>
                 <button onClick={handleEditUsername} className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
                   <Edit2 size={12} /> Edit Profile
                 </button>
@@ -449,23 +462,26 @@ export default function DashboardHeader({ title, role, username: initialUsername
               
               <nav className="flex flex-col gap-1 mt-1">
                 {isAdmin && (
-                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-[#F0F2F5] dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                    <Users size={18} className="text-[#4B49AC] dark:text-[#ff8c00]" /> User Management
+                  <button onClick={handleUserManagement} className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition cursor-pointer">
+                    <Users size={16} className="text-[#4B49AC] dark:text-[#ff8c00]" /> User Management
                   </button>
                 )}
                 
-                <button onClick={handleManageQR} className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-white hover:bg-[#F0F2F5] dark:hover:bg-[#333333] rounded-xl transition cursor-pointer">
-                  <QrCode size={18} className="text-[#4B49AC] dark:text-[#ff8c00]" /> Manage QR Code
+                <button onClick={handleManageQR} className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition cursor-pointer">
+                  <QrCode size={16} className="text-[#4B49AC] dark:text-[#ff8c00]" /> Manage QR Code
                 </button>
-                <div className="h-px bg-[#7DA0FA]/30 dark:bg-[#ff8c00]/20 mx-4 my-1" />
-                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 rounded-xl transition cursor-pointer">
-                  <LogOut size={18} /> Logout
+                
+                <div className="h-px bg-slate-100 dark:bg-zinc-800 mx-2 my-1" />
+                
+                <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-500/10 rounded-xl transition cursor-pointer">
+                  <LogOut size={16} /> Logout
                 </button>
               </nav>
             </div>
           )}
         </div>
+
       </div>
-    </div>
+    </header>
   );
 }

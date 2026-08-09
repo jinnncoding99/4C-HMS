@@ -137,7 +137,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const isAdmin = userRole.toLowerCase() === 'admin';
 
   return (
-    <div className="p-6 space-y-6 bg-[#F0F2F5] dark:bg-zinc-950 transition-colors relative min-h-screen">
+    <div className="p-4 md:p-6 space-y-6 bg-[#F0F2F5] dark:bg-zinc-950 transition-colors relative min-h-screen">
       
       {activeUserId && <RoleListenerModal currentUserId={activeUserId} />}
 
@@ -218,16 +218,16 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
       <section className="transition-all duration-300 mt-0">
         <div className="space-y-6">
           <Tabs defaultValue="bills" className="w-full">
-            {/* Centered Underline Border Bar with slightly larger text (text-base) */}
-            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
-              <TabsList variant="line" className="w-full justify-center space-x-12">
-                <TabsTrigger value="bills" className="cursor-pointer gap-2 px-1 text-base">
-                  <FileText className="h-5 w-5" />
+            {/* Mobile-optimized scrollable & centered tab list wrapper */}
+            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto scrollbar-none">
+              <TabsList variant="line" className="w-full min-w-max justify-center space-x-8 md:space-x-12 px-2">
+                <TabsTrigger value="bills" className="cursor-pointer gap-2 px-1 text-sm md:text-base">
+                  <FileText className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Monthly Bills</span>
                 </TabsTrigger>
                 
-                <TabsTrigger value="expenses" className="cursor-pointer gap-2 px-1 text-base">
-                  <Receipt className="h-5 w-5" />
+                <TabsTrigger value="expenses" className="cursor-pointer gap-2 px-1 text-sm md:text-base">
+                  <Receipt className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Expenses & Misc</span>
                 </TabsTrigger>
               </TabsList>
