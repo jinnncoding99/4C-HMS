@@ -19,29 +19,29 @@ interface BillBreakdownProps {
 
 export const BillBreakdown = ({ breakdown, totalDays, paymentReceiverId }: BillBreakdownProps) => {
   return (
-    <div className="mt-3 p-3 bg-[#181818] rounded-md border border-[#333] space-y-2">
-      <p className="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+    <div className="mt-3 p-3 bg-slate-100 dark:bg-[#181818] rounded-md border border-slate-200 dark:border-[#333] space-y-2 transition-colors">
+      <p className="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-wider mb-2">
         Member Share Breakdown ({breakdown.length} Participants)
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {breakdown.map((member) => (
-          <div key={member.id} className="flex justify-between items-center bg-[#111] p-2 rounded border border-[#222] text-xs">
+          <div key={member.id} className="flex justify-between items-center bg-white dark:bg-[#111] p-2 rounded border border-slate-200 dark:border-[#222] text-xs transition-colors">
             <div>
-              <p className="font-semibold text-white">
+              <p className="font-semibold text-slate-900 dark:text-white">
                 {member.username} {member.id === paymentReceiverId ? "(Receiver)" : ""}
               </p>
-              <p className="text-[10px] text-gray-400">Present in House: {member.daysPresent} / {totalDays} days</p>
+              <p className="text-[10px] text-slate-500 dark:text-gray-400">Present in House: {member.daysPresent} / {totalDays} days</p>
             </div>
             <div className="text-right">
-              <p className="font-bold text-[#ff8c00]">
+              <p className="font-bold text-[#4B49AC] dark:text-[#ff8c00]">
                 ₱{member.status === 'paid' || member.isPaid 
                   ? '0.00' 
                   : (Math.max(0, Number(member.shareDue) - Number(member.paid_amount || 0))).toFixed(2)}
               </p>
               <span className={`text-[10px] font-semibold uppercase block ${
-                member.status === 'paid' || member.isPaid ? 'text-green-500' :
-                member.status === 'pending_approval' ? 'text-yellow-500' :
-                'text-gray-400'
+                member.status === 'paid' || member.isPaid ? 'text-emerald-600 dark:text-green-500' :
+                member.status === 'pending_approval' ? 'text-amber-600 dark:text-yellow-500' :
+                'text-slate-500 dark:text-gray-400'
               }`}>
                 {member.isPaid ? 'paid' : (member.status || 'unpaid')}
               </span>

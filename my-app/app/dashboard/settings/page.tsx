@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-md mx-auto bg-card rounded-2xl shadow-sm border border-border p-6">
+      <div className="max-w-md mx-auto bg-card rounded-2xl shadow-sm border border-border p-6 text-card-foreground">
         <button 
           onClick={() => router.push('/dashboard')} 
           className="mb-6 flex items-center text-muted-foreground hover:text-foreground transition cursor-pointer"
@@ -57,7 +57,7 @@ export default function SettingsPage() {
             <input 
               value={newName} 
               onChange={(e) => setNewName(e.target.value)} 
-              className="w-full border border-input bg-background p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition"
+              className="w-full border border-input bg-background text-foreground p-3 rounded-xl focus:ring-2 focus:ring-primary outline-none transition"
               placeholder="Enter new username"
             />
           </div>

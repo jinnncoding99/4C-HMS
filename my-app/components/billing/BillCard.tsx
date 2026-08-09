@@ -53,40 +53,40 @@ export const BillCard = ({
   const allOthersPaid = nonReceiverShares.length > 0 && nonReceiverShares.every((b) => b.isPaid || b.status === 'paid');
 
   return (
-    <div className="p-4 border border-[#333] rounded-lg bg-[#111111] space-y-3">
+    <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-bold text-lg text-white">{bill.description}</p>
+            <p className="font-bold text-lg text-slate-900 dark:text-white">{bill.description}</p>
             {allOthersPaid && (
-              <span className="text-[10px] bg-green-500/20 border border-green-500 text-green-400 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-[10px] bg-emerald-500/10 dark:bg-green-500/20 border border-emerald-500 dark:border-green-500 text-emerald-600 dark:text-green-400 font-semibold px-2 py-0.5 rounded-full">
                 All Shares Collected
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-slate-500 dark:text-gray-400">
             Billing Period: {bill.billing_period_start || 'N/A'} to {bill.billing_period_end || 'N/A'} ({totalDays} Days) • Type:{' '}
             <span className="capitalize">{bill.calculation_type || 'prorated'}</span>
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-400">Total Bill Due</p>
-          <p className="font-bold text-xl text-[#ff8c00]">₱{Number(bill.total_amount).toFixed(2)}</p>
+          <p className="text-sm text-slate-500 dark:text-gray-400">Total Bill Due</p>
+          <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{Number(bill.total_amount).toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-2 border-t border-[#222]">
+      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-[#222]">
         <div>
-          <p className="text-xs text-gray-400">Your Share Due:</p>
-          <p className="text-md font-bold text-white">
+          <p className="text-xs text-slate-500 dark:text-gray-400">Your Share Due:</p>
+          <p className="text-md font-bold text-slate-900 dark:text-white">
             {myBreakdown ? (
               isMySharePaid ? (
-                <span className="text-green-500 font-semibold">₱0.00 (Paid)</span>
+                <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
               ) : (
                 `₱${userShareDue.toFixed(2)}`
               )
             ) : (
-              <span className="text-gray-500 italic text-xs">Not included in this bill</span>
+              <span className="text-slate-400 dark:text-gray-500 italic text-xs">Not included in this bill</span>
             )}
           </p>
         </div>
@@ -95,7 +95,7 @@ export const BillCard = ({
           {isPaymentReceiver && allOthersPaid && (
             <Button
               onClick={() => onSettleBill(bill)}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
             >
               Mark as Settled
             </Button>
@@ -103,13 +103,13 @@ export const BillCard = ({
 
           {myBreakdown && userShareDue > 0 && !isMySharePaid && !isDanz && !isPaymentReceiver && (
             hasPendingSubmission ? (
-              <span className="text-xs text-yellow-500 font-semibold bg-yellow-500/10 border border-yellow-500/30 px-3 py-1.5 rounded-md">
+              <span className="text-xs text-amber-600 dark:text-yellow-500 font-semibold bg-amber-500/10 dark:bg-yellow-500/10 border border-amber-500/30 dark:border-yellow-500/30 px-3 py-1.5 rounded-md">
                 Pending Approval
               </span>
             ) : (
               <Button
                 onClick={() => onPayNow(bill, userShareDue)}
-                className="bg-[#ff8c00] hover:bg-[#e67e00] text-black font-bold text-xs h-9 px-4 cursor-pointer"
+                className="bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
               >
                 Pay Now
               </Button>
@@ -128,7 +128,7 @@ export const BillCard = ({
                       e.stopPropagation();
                       onEditBill(bill);
                     }}
-                    className="text-blue-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-500/10"
+                    className="text-blue-600 dark:text-blue-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-500/10"
                     title="Edit Bill"
                   >
                     <Edit size={16} />
@@ -142,7 +142,7 @@ export const BillCard = ({
                       e.stopPropagation();
                       onDeleteBill(bill.id);
                     }}
-                    className="text-red-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-500/10"
+                    className="text-red-600 dark:text-red-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10"
                     title="Delete Bill"
                   >
                     <Trash2 size={16} />
@@ -158,7 +158,7 @@ export const BillCard = ({
       <div className="pt-2">
         <button
           onClick={() => onToggleExpand(bill.id)}
-          className="text-xs text-[#ff8c00] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
+          className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
         >
           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {isExpanded ? "Hide Member Breakdown & Days" : "See More Info (Member Shares & Prorated Days)"}

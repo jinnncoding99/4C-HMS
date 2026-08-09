@@ -14,32 +14,60 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  /* ... keep your existing font/sidebar variables ... */
 }
 
 :root {
-  /* Pornhub Palette */
+  /* Light Theme: Clean background with Purple (#4B49AC) primary brand color */
+  --background: oklch(0.96 0.005 240); 
+  --foreground: oklch(0.15 0.02 240); 
+
+  --card: oklch(1 0 0); 
+  --card-foreground: oklch(0.15 0.02 240);
+
+  /* Purple Brand Color #4B49AC converted to approximate OKLCH */
+  --primary: oklch(0.52 0.14 285); 
+  --primary-foreground: oklch(1 0 0); 
+
+  --border: oklch(0.88 0.01 240);
+  --input: oklch(0.88 0.01 240);
+  --ring: oklch(0.52 0.14 285);
+
+  --radius: 0.625rem;
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 240);
+
+  --secondary: oklch(0.93 0.01 240);
+  --secondary-foreground: oklch(0.15 0.02 240);
+
+  --muted: oklch(0.93 0.01 240);
+  --muted-foreground: oklch(0.5 0.02 240);
+
+  --accent: oklch(0.93 0.01 240);
+  --accent-foreground: oklch(0.15 0.02 240);
+
+  --destructive: oklch(0.5 0.25 27);
+}
+
+.dark {
+  /* Dark Theme: Pure black with Orange/Amber accent */
   --background: oklch(0 0 0); 
   --foreground: oklch(1 0 0); 
 
   --card: oklch(0.1 0 0); 
   --card-foreground: oklch(1 0 0);
 
-  /* Set Primary to Pornhub Orange (#FF9000) using OKLCH for consistency */
-  /* #FF9000 in OKLCH is roughly 0.7 0.18 50 */
-  --primary: oklch(0.7 0.18 50); 
+  --primary: oklch(0.7 0.18 50); /* #FF9000 */
   --primary-foreground: oklch(0 0 0); 
 
   --border: oklch(0.2 0 0);
   --input: oklch(0.2 0 0);
   --ring: oklch(0.7 0.18 50);
 
-  --radius: 0.625rem;
-
   --popover: oklch(0 0 0);
   --popover-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.15 0 0);
+  --secondary: oklch(0.15 0.0, 0);
   --secondary-foreground: oklch(1 0 0);
 
   --muted: oklch(0.15 0 0);
@@ -47,8 +75,6 @@
 
   --accent: oklch(0.15 0 0);
   --accent-foreground: oklch(1 0 0);
-
-  --destructive: oklch(0.5 0.25 27);
 }
 
 @layer base {
@@ -59,15 +85,4 @@
     background-color: var(--background);
     color: var(--foreground);
   }
-}
-
-/* Force the active state for Tabs and other components */
-[data-state="active"] {
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-}
-/* Force active tab color with high specificity */
-[data-state="active"] {
-  background-color: #FF9000 !important;
-  color: #000000 !important;
 }

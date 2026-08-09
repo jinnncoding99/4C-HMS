@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, History, Plane, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, History, Plane, ChevronLeft, ChevronRight, Sun, Moon, MoreHorizontal } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
 import { BillSummary } from "../billing/BillSummary";
-import {ExpenseSummary } from "../expense/ExpenseSummary"; 
-import {ExpenseForm }from "../expense/ExpenseForm";
+import ExpenseSummary from "../expense/ExpenseSummary"; 
+import ExpenseForm from "../expense/ExpenseForm";
 import RoleListenerModal from "@/components/RoleListenerModal";
 import HistoryTab from "@/components/dashboard/HistoryTab";
 import VacationSummaryModal from "@/components/dashboard/VacationSummaryModal";
@@ -22,13 +23,13 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const [profile, setProfile] = useState<{ username: string; id?: string; role?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Added states required by BillSummary (bills data, profiles, and payment requests)
   const [profilesList, setProfilesList] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [billSharesMap, setBillSharesMap] = useState<Record<string, any[]>>({});
   const [userPaymentRequests, setUserPaymentRequests] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
 
@@ -38,16 +39,13 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
   const fetchData = async () => {
     try {
-      // Fetch profiles
       const { data: profilesData } = await supabase.from("profiles").select("*");
       if (profilesData) setProfilesList(profilesData);
 
-      // Fetch bills
       const { data: billsData } = await supabase.from("bills").select("*").order("created_at", { ascending: false });
       if (billsData) {
         setBills(billsData);
 
-        // Fetch bill shares/breakdown for each bill
         const sharesMap: Record<string, any[]> = {};
         for (const bill of billsData) {
           const { data: sharesData } = await supabase
@@ -70,7 +68,6 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         setBillSharesMap(sharesMap);
       }
 
-      // Fetch payment requests
       const { data: reqsData } = await supabase.from("payment_requests").select("*");
       if (reqsData) setUserPaymentRequests(reqsData);
 
@@ -126,7 +123,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#F0F2F5] dark:bg-zinc-950 transition-colors">
-        <Loader2 className="animate-spin text-[#4B49AC] dark:text-[#ff8c00]" size={48} />
+        <Loader2 className="animate-spin text-[#4B49AC] dark:text-amber-500" size={48} />
       </div>
     );
   }
@@ -136,33 +133,30 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const isAdmin = userRole.toLowerCase() === 'admin';
 
   return (
-    <div className="p-6 space-y-4 bg-[#F0F2F5] dark:bg-zinc-950 transition-colors relative min-h-screen">
+    <div className="p-6 space-y-6 bg-[#F0F2F5] dark:bg-zinc-950 transition-colors relative min-h-screen">
       
-      {/* Realtime Role Change Listener Modal */}
       {activeUserId && <RoleListenerModal currentUserId={activeUserId} />}
 
-      {/* Rendered Separate Dashboard Header Component */}
       <DashboardHeader 
         title={isAdmin ? "Admin Dashboard" : "User Dashboard"}
         role={userRole}
         username={profile?.username}
       />
 
-      {/* Collapsible Action Buttons Bar */}
-      <div className="flex justify-end items-center gap-2 relative min-h-[40px]">
+      <div className={`flex justify-end items-center gap-2 relative transition-all duration-300 ${isButtonsVisible ? 'my-3' : 'mt-2 mb-2'}`}>
         <Button
           onClick={() => setIsButtonsVisible(!isButtonsVisible)}
           title={isButtonsVisible ? "Collapse Actions" : "Expand Actions"}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] text-[#4B49AC] dark:text-[#ff8c00] hover:bg-[#4B49AC] hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black h-10 w-8 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm z-10"
+          className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 text-[#4B49AC] dark:text-amber-500 hover:bg-[#4B49AC] hover:text-white dark:hover:bg-amber-500 dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm z-10"
         >
-          {isButtonsVisible ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isButtonsVisible ? <ChevronRight size={16} /> : <MoreHorizontal size={18} />}
         </Button>
 
-        <div className={`flex items-center gap-2 transition-all duration-300 overflow-hidden ${isButtonsVisible ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 pointer-events-none'}`}>
+        <div className={`flex items-center gap-2 transition-all duration-300 overflow-hidden ${isButtonsVisible ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 invisible pointer-events-none'}`}>
           <Button
             onClick={() => setIsHistoryModalOpen(true)}
             title="History Logs"
-            className="bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] text-[#4B49AC] dark:text-[#ff8c00] hover:bg-[#4B49AC] hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm"
+            className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 text-[#4B49AC] dark:text-amber-500 hover:bg-[#4B49AC] hover:text-white dark:hover:bg-amber-500 dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm shrink-0"
           >
             <History size={18} />
           </Button>
@@ -170,18 +164,25 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
           <Button
             onClick={() => setIsVacationModalOpen(true)}
             title="Vacation Leave Summary"
-            className="bg-white dark:bg-[#1a1a1a] border border-[#98BDFF] dark:border-[#ff8c00] text-[#4B49AC] dark:text-[#ff8c00] hover:bg-[#4B49AC] hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm"
+            className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 text-[#4B49AC] dark:text-amber-500 hover:bg-[#4B49AC] hover:text-white dark:hover:bg-amber-500 dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm shrink-0"
           >
             <Plane size={18} />
+          </Button>
+
+          <Button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            title="Toggle Theme"
+            className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 text-[#4B49AC] dark:text-amber-500 hover:bg-[#4B49AC] hover:text-white dark:hover:bg-amber-500 dark:hover:text-black h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer transition shadow-sm shrink-0"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </Button>
         </div>
       </div>
 
-      {/* Add Expense Modal */}
       {isAddFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-[#98BDFF] dark:border-[#ff8c00] w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-[#4B49AC] dark:text-[#ff8c00] mb-4">Add New Expense</h2>
+          <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-[#4B49AC] dark:text-amber-500 mb-4">Add New Expense</h2>
             <ExpenseForm 
               onSuccess={handleCloseAddModal} 
               onCancel={handleCloseAddModal} 
@@ -190,10 +191,9 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         </div>
       )}
 
-      {/* History Modal */}
       {isHistoryModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-[#98BDFF] dark:border-[#ff8c00] w-full max-w-4xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="mt-2">
               <HistoryTab onBack={() => setIsHistoryModalOpen(false)} />
             </div>
@@ -201,10 +201,9 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         </div>
       )}
 
-      {/* Vacation Summary Modal */}
       {isVacationModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-[#98BDFF] dark:border-[#ff8c00] w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <div className="mt-2">
               <VacationSummaryModal onBack={() => setIsVacationModalOpen(false)} />
             </div>
@@ -212,20 +211,19 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         </div>
       )}
 
-      {/* Merged Tabs Section with Uniform Wrappers */}
-      <section className={`transition-all duration-300 ${isButtonsVisible ? 'mt-2' : '-mt-10'}`}>
+      <section className="transition-all duration-300 mt-0">
         <div className="space-y-6">
           <Tabs defaultValue="bills" className="w-full">
-            <TabsList className="bg-transparent border-b border-[#7DA0FA]/40 dark:border-[#ff8c00]/30 w-full justify-start rounded-none p-0 h-10 mb-6">
+            <TabsList className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 w-full justify-start rounded-xl p-1.5 h-auto mb-3 shadow-sm">
               <TabsTrigger 
                 value="bills" 
-                className="px-4 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#4B49AC] dark:data-[state=active]:border-[#ff8c00] data-[state=active]:text-[#4B49AC] dark:data-[state=active]:text-[#ff8c00] text-slate-600 dark:text-zinc-400 font-medium transition-colors"
+                className="px-6 py-3 rounded-lg text-slate-600 dark:text-zinc-400 text-base font-semibold transition-all cursor-pointer hover:bg-[#4B49AC]/10 dark:hover:bg-amber-500/10 hover:text-[#4B49AC] dark:hover:text-amber-500 data-[state=active]:!bg-transparent dark:data-[state=active]:!bg-transparent data-[state=active]:!text-[#4B49AC] dark:data-[state=active]:!text-amber-500"
               >
-                Bills
+                Monthly Bills
               </TabsTrigger>
               <TabsTrigger 
                 value="expenses" 
-                className="px-4 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#4B49AC] dark:data-[state=active]:border-[#ff8c00] data-[state=active]:text-[#4B49AC] dark:data-[state=active]:text-[#ff8c00] text-slate-600 dark:text-zinc-400 font-medium transition-colors"
+                className="px-6 py-3 rounded-lg text-slate-600 dark:text-zinc-400 text-base font-semibold transition-all cursor-pointer hover:bg-[#4B49AC]/10 dark:hover:bg-amber-500/10 hover:text-[#4B49AC] dark:hover:text-amber-500 data-[state=active]:!bg-transparent dark:data-[state=active]:!bg-transparent data-[state=active]:!text-[#4B49AC] dark:data-[state=active]:!text-amber-500"
               >
                 Expenses & Misc
               </TabsTrigger>

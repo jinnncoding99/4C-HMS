@@ -107,21 +107,21 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
   });
 
   return (
-    <div className="w-full space-y-4 text-white relative">
+    <div className="w-full space-y-4 text-foreground relative">
       {/* Header section */}
-      <div className="flex flex-col border-b border-[#333] pb-4 gap-4 relative">
+      <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
         {onBack && (
           <div className="flex justify-between items-center">
             <Button 
               onClick={onBack}
               title="Return"
-              className="md:hidden bg-[#222] border border-[#333] hover:bg-[#333] text-gray-300 hover:text-white h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
+              className="md:hidden bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
             >
               <ArrowLeft size={18} />
             </Button>
             <button 
               onClick={onBack}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-gray-400 hover:text-white transition cursor-pointer text-xs font-bold bg-[#222] border border-[#333] px-3 py-1.5 rounded-lg"
+              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-muted border border-border px-3 py-1.5 rounded-lg"
             >
               <X size={14} /> Close
             </button>
@@ -130,18 +130,18 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3 w-full">
-            <div className="p-2.5 bg-[#ff8c00]/10 border border-[#ff8c00]/30 rounded-xl text-[#ff8c00] shrink-0">
+            <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
               <Plane size={24} />
             </div>
             <div>
               <h3 className="text-xl font-bold">Vacation Leave Summary</h3>
-              <p className="text-sm text-gray-400">Review all team vacation history and request time off.</p>
+              <p className="text-sm text-muted-foreground">Review all team vacation history and request time off.</p>
             </div>
           </div>
 
           <Button 
             onClick={() => setIsRequestModalOpen(true)}
-            className="bg-[#ff8c00] text-black hover:bg-[#e07b00] font-bold text-xs cursor-pointer flex items-center gap-2 h-10 px-4 shrink-0 w-full sm:w-auto justify-center"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs cursor-pointer flex items-center gap-2 h-10 px-4 shrink-0 w-full sm:w-auto justify-center"
           >
             <Plus size={16} /> Request Vacation
           </Button>
@@ -149,28 +149,28 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       </div>
 
       {/* Date Range Selector Toolbar */}
-      <div className="flex flex-wrap items-center justify-center gap-3 bg-[#111] p-3 rounded-xl border border-[#333] text-xs">
-        <span className="text-gray-400 flex items-center gap-1 font-medium">
-          <Calendar size={14} className="text-[#ff8c00]" /> Date Range Filter:
+      <div className="flex flex-wrap items-center justify-center gap-3 bg-card p-3 rounded-xl border border-border text-xs">
+        <span className="text-muted-foreground flex items-center gap-1 font-medium">
+          <Calendar size={14} className="text-primary" /> Date Range Filter:
         </span>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <input 
             type="date" 
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#333] text-white px-2.5 py-1.5 rounded-lg focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
           />
-          <span className="text-gray-500">to</span>
+          <span className="text-muted-foreground">to</span>
           <input 
             type="date" 
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#333] text-white px-2.5 py-1.5 rounded-lg focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
           />
           {(startDate || endDate) && (
             <button 
               onClick={() => { setStartDate(''); setEndDate(''); }} 
-              className="text-[#ff8c00] hover:underline ml-2 cursor-pointer"
+              className="text-primary hover:underline ml-2 cursor-pointer"
             >
               Clear
             </button>
@@ -179,22 +179,22 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap justify-center gap-2 border-b border-[#333] pb-4">
+      <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-4">
         <Button 
           onClick={() => setFilterType('all')} 
-          className={`text-xs cursor-pointer ${filterType === 'all' ? 'bg-[#ff8c00] text-black font-bold' : 'bg-[#222] text-white hover:bg-[#333]'}`}
+          className={`text-xs cursor-pointer ${filterType === 'all' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
           All Requests ({vacations.length})
         </Button>
         <Button 
           onClick={() => setFilterType('approved')} 
-          className={`text-xs cursor-pointer ${filterType === 'approved' ? 'bg-[#ff8c00] text-black font-bold' : 'bg-[#222] text-white hover:bg-[#333]'}`}
+          className={`text-xs cursor-pointer ${filterType === 'approved' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
           Approve Requests ({vacations.filter(v => (v.status || 'pending').toLowerCase() === 'approved').length})
         </Button>
         <Button 
           onClick={() => setFilterType('pending')} 
-          className={`text-xs cursor-pointer ${filterType === 'pending' ? 'bg-[#ff8c00] text-black font-bold' : 'bg-[#222] text-white hover:bg-[#333]'}`}
+          className={`text-xs cursor-pointer ${filterType === 'pending' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
           Pending Requests ({vacations.filter(v => (v.status || 'pending').toLowerCase() === 'pending').length})
         </Button>
@@ -203,7 +203,7 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       {/* Summary List Content */}
       <div className="space-y-3 min-h-[250px]">
         {loading ? (
-          <p className="text-center text-gray-500 py-12 text-sm">Loading vacation records...</p>
+          <p className="text-center text-muted-foreground py-12 text-sm">Loading vacation records...</p>
         ) : filteredVacations.length > 0 ? (
           <div className="space-y-2">
             {filteredVacations.map((v) => {
@@ -211,12 +211,12 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
               const isApproved = status === 'approved';
               
               return (
-                <div key={v.id} className="bg-[#111] p-4 rounded-xl border border-[#333] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+                <div key={v.id} className="bg-card p-4 rounded-xl border border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
                   <div className="space-y-1">
-                    <p className="font-semibold text-white text-sm">{v.reason}</p>
-                    <p className="text-gray-500 text-[11px]">Requested by: <span className="text-gray-300">{v.user_email}</span></p>
-                    <p className="text-gray-400 flex items-center gap-1">
-                      <Calendar size={12} className="text-[#ff8c00]" /> 
+                    <p className="font-semibold text-foreground text-sm">{v.reason}</p>
+                    <p className="text-muted-foreground text-[11px]">Requested by: <span className="text-foreground">{v.user_email}</span></p>
+                    <p className="text-muted-foreground flex items-center gap-1">
+                      <Calendar size={12} className="text-primary" /> 
                       {v.start_date} to {v.end_date} {v.days_requested ? `(${v.days_requested} days)` : ''}
                     </p>
                   </div>
@@ -242,7 +242,7 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider border ${
                         isApproved 
                           ? 'bg-green-500/10 text-green-500 border-green-500/30' 
-                          : 'bg-[#ff8c00]/10 text-[#ff8c00] border-[#ff8c00]/30'
+                          : 'bg-primary/10 text-primary border-primary/30'
                       }`}>
                         {status}
                       </span>
@@ -254,7 +254,7 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
           </div>
         ) : (
           <div className="text-center py-12 space-y-2">
-            <p className="text-gray-500 text-xs italic">No vacation requests found matching this filter or date range.</p>
+            <p className="text-muted-foreground text-xs italic">No vacation requests found matching this filter or date range.</p>
           </div>
         )}
       </div>
@@ -262,7 +262,7 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       {/* Pop-up Modal containing the Vacation Request Form */}
       {isRequestModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#ff8c00] w-full max-w-md shadow-2xl relative">
+          <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-md shadow-2xl relative text-card-foreground">
             <VacationRequestComponent 
               onBack={() => setIsRequestModalOpen(false)}
               onSuccess={() => {

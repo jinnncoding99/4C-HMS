@@ -150,23 +150,23 @@ export default function ManageQRPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#111111]">
-      <div className="w-full max-w-sm bg-[#1a1a1a] rounded-2xl shadow-xl border border-[#ff8c00] p-6 relative text-white">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-sm bg-card rounded-2xl shadow-xl border border-primary p-6 relative text-card-foreground">
         
         <button 
           onClick={() => router.push('/dashboard')} 
-          className="absolute top-4 left-4 p-2 text-gray-400 hover:text-[#ff8c00] transition cursor-pointer"
+          className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-primary transition cursor-pointer"
         >
           <ArrowLeft size={24} />
         </button>
 
-        <h2 className="text-xl font-bold mb-6 text-center mt-2 text-white">Manage QR Code</h2>
+        <h2 className="text-xl font-bold mb-6 text-center mt-2 text-foreground">Manage QR Code</h2>
 
-        <div className="w-48 h-48 mx-auto bg-[#111111] rounded-lg flex items-center justify-center mb-6 border-2 border-dashed border-[#ff8c00] overflow-hidden">
+        <div className="w-48 h-48 mx-auto bg-muted rounded-lg flex items-center justify-center mb-6 border-2 border-dashed border-primary overflow-hidden">
           {qrImage ? (
             <img src={qrImage} alt="QR Code" className="w-full h-full object-contain p-2 bg-white" />
           ) : (
-            <QrCode size={64} className="text-[#ff8c00]" />
+            <QrCode size={64} className="text-primary" />
           )}
         </div>
 
@@ -182,7 +182,7 @@ export default function ManageQRPage() {
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full py-2.5 px-4 bg-[#ff8c00] hover:bg-[#e67e00] text-black font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
+            className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
           >
             {uploading ? "Saving..." : (qrImage ? <Upload size={18} /> : <Plus size={18} />)} 
             {uploading ? "Uploading..." : (qrImage ? "Replace QR Code" : "Add QR Code")}

@@ -42,8 +42,8 @@ export default function DashboardRouter() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#111111]">
-        <Loader2 className="animate-spin text-[#ff8c00]" size={48} />
+      <div className="flex justify-center items-center h-screen bg-background">
+        <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     );
   }

@@ -47,7 +47,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
   });
 
   const supabase = createClient();
-  const inputStyles = "w-full bg-[#111111] border border-[#333333] text-white rounded-md p-2 text-sm focus:border-[#ff8c00] focus:ring-1 focus:ring-[#ff8c00] outline-none transition-all";
+  const inputStyles = "w-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white rounded-md p-2 text-sm focus:border-[#4B49AC] dark:focus:border-[#ff8c00] focus:ring-1 focus:ring-[#4B49AC] dark:focus:ring-[#ff8c00] outline-none transition-all";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -254,59 +254,59 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
     : "0.00";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-white">
+    <form onSubmit={handleSubmit} className="space-y-4 text-slate-900 dark:text-white">
       <div>
-        <label className="text-sm font-medium text-gray-300">Description</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Description</label>
         <Input 
           value={formData.description} 
           onChange={e => setFormData({...formData, description: e.target.value})} 
-          className="bg-[#111111] border-[#333333] text-white focus:border-[#ff8c00]" 
+          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
           placeholder="e.g. Groceries - Weekly Run"
           required
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-300">Expense Date</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Expense Date</label>
         <Input 
           type="date" 
           value={formData.expenseDate || ""} 
           onChange={e => setFormData({...formData, expenseDate: e.target.value})} 
-          className="bg-[#111111] border-[#333333] text-white focus:border-[#ff8c00]" 
+          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
           required 
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-300 block mb-1">Category</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Category</label>
         <select 
           value={formData.category} 
           onChange={(e) => setFormData({...formData, category: e.target.value})}
           className={inputStyles}
         >
-          <option value="General" className="bg-[#1a1a1a] text-white">General</option>
-          <option value="Groceries" className="bg-[#1a1a1a] text-white">Groceries</option>
-          <option value="Utilities" className="bg-[#1a1a1a] text-white">Utilities</option>
-          <option value="Supplies" className="bg-[#1a1a1a] text-white">Supplies</option>
+          <option value="General" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">General</option>
+          <option value="Groceries" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Groceries</option>
+          <option value="Utilities" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Utilities</option>
+          <option value="Supplies" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Supplies</option>
         </select>
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-300 block mb-1">Expense Participants</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Expense Participants</label>
         <select 
           value={shareMode} 
           onChange={(e) => handleShareModeChange(e.target.value as "all" | "custom")}
           className={inputStyles}
         >
-          <option value="all" className="bg-[#1a1a1a] text-white">All Boarders (Everyone shares)</option>
-          <option value="custom" className="bg-[#1a1a1a] text-white">Custom (Select specific participants)</option>
+          <option value="all" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">All Boarders (Everyone shares)</option>
+          <option value="custom" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Custom (Select specific participants)</option>
         </select>
       </div>
 
       {shareMode === 'custom' && (
         <div className="space-y-2">
-          <label className="text-xs text-gray-400 block font-medium">Select who will share this expense:</label>
-          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 bg-[#111111] border border-[#333333] rounded-md">
+          <label className="text-xs text-slate-500 dark:text-gray-400 block font-medium">Select who will share this expense:</label>
+          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#333333] rounded-md">
             {profiles.map(p => {
               const isChecked = selectedMembers.includes(p.id);
               return (
@@ -315,15 +315,15 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
                   onClick={() => toggleMember(p.id)}
                   className={`flex items-center gap-2 p-2 rounded cursor-pointer border text-xs transition ${
                     isChecked 
-                      ? 'bg-[#ff8c00]/10 border-[#ff8c00] text-white' 
-                      : 'bg-[#181818] border-[#222222] text-gray-400'
+                      ? 'bg-[#4B49AC]/10 dark:bg-[#ff8c00]/10 border-[#4B49AC] dark:border-[#ff8c00] text-slate-900 dark:text-white' 
+                      : 'bg-white dark:bg-[#181818] border-slate-200 dark:border-[#222222] text-slate-500 dark:text-gray-400'
                   }`}
                 >
                   <input 
                     type="checkbox" 
                     checked={isChecked} 
                     onChange={() => {}} 
-                    className="accent-[#ff8c00] cursor-pointer"
+                    className="accent-[#4B49AC] dark:accent-[#ff8c00] cursor-pointer"
                   />
                   <span className="truncate font-medium">{p.username}</span>
                 </div>
@@ -335,34 +335,34 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-gray-300">Total Amount (₱)</label>
-          <Input type="number" step="0.01" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="bg-[#111111] border-[#333333] text-white" placeholder="0.00" required />
+          <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Total Amount (₱)</label>
+          <Input type="number" step="0.01" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white" placeholder="0.00" required />
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-300">Sharing Members Count</label>
-          <Input type="number" value={membersCount} className="bg-[#111111] border-[#333333] text-white opacity-80 cursor-not-allowed" readOnly disabled />
+          <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Sharing Members Count</label>
+          <Input type="number" value={membersCount} className="bg-slate-100 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white opacity-80 cursor-not-allowed" readOnly disabled />
         </div>
       </div>
 
       <div>
-        <label className="text-sm font-medium text-gray-300 block mb-1">Receipt (Optional)</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Receipt (Optional)</label>
         <Input 
           type="file" 
           accept="image/*,application/pdf"
           onChange={e => setReceiptFile(e.target.files?.[0] || null)}
-          className="bg-[#111111] border-[#333333] text-white text-xs file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#ff8c00] file:text-black hover:file:bg-[#e67e00] cursor-pointer"
+          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white text-xs file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#4B49AC] dark:file:bg-[#ff8c00] file:text-white dark:file:text-black hover:file:bg-[#3f3de9] dark:hover:file:bg-[#e67e00] cursor-pointer"
         />
       </div>
 
-      <div className="bg-[#111] p-3 rounded-lg border border-[#333] text-xs text-gray-400">
-        Estimated Split Share per person: <span className="text-[#ff8c00] font-bold">₱{estimatedShare}</span>
+      <div className="bg-slate-100 dark:bg-[#111] p-3 rounded-lg border border-slate-200 dark:border-[#333] text-xs text-slate-600 dark:text-gray-400">
+        Estimated Split Share per person: <span className="text-[#4B49AC] dark:text-[#ff8c00] font-bold">₱{estimatedShare}</span>
       </div>
 
       <div className="flex gap-3 pt-2">
         <Button 
           type="submit" 
           disabled={loading}
-          className="flex-1 bg-[#ff8c00] hover:bg-[#e67e00] text-black font-bold cursor-pointer"
+          className="flex-1 bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer"
         >
           {loading ? "Saving..." : isEditing ? "Save Changes" : "Submit Expense"}
         </Button>
@@ -371,7 +371,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
             type="button" 
             variant="ghost" 
             onClick={onCancel}
-            className="text-gray-400 hover:text-white cursor-pointer"
+            className="text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
             Cancel
           </Button>

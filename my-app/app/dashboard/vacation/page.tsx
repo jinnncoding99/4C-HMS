@@ -62,21 +62,21 @@ export default function VacationRequestComponent({ onSuccess, onBack }: Vacation
   const handleReturn = onBack || onSuccess;
 
   return (
-    <div className="text-white space-y-4">
-      <div className="flex flex-col border-b border-[#333] pb-4 gap-4 relative">
+    <div className="text-foreground space-y-4">
+      <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
         {handleReturn && (
           <div className="flex justify-between items-center">
             <Button 
               onClick={handleReturn}
               title="Return"
-              className="md:hidden bg-[#222] border border-[#333] hover:bg-[#333] text-gray-300 hover:text-white h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
+              className="md:hidden bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
             >
               <ArrowLeft size={18} />
             </Button>
 
             <button 
               onClick={handleReturn}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-gray-400 hover:text-white transition cursor-pointer text-xs font-bold bg-[#222] border border-[#333] px-3 py-1.5 rounded-lg"
+              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-card border border-border px-3 py-1.5 rounded-lg"
             >
               <X size={14} /> Close
             </button>
@@ -84,51 +84,51 @@ export default function VacationRequestComponent({ onSuccess, onBack }: Vacation
         )}
 
         <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left w-full">
-          <div className="p-2.5 bg-[#ff8c00]/10 border border-[#ff8c00]/30 rounded-xl text-[#ff8c00] shrink-0">
+          <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
             <Plane size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Request Vacation</h2>
-            <p className="text-sm text-gray-400">Submit your scheduled time off.</p>
+            <h2 className="text-xl font-bold text-foreground">Request Vacation</h2>
+            <p className="text-sm text-muted-foreground">Submit your scheduled time off.</p>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         <div>
-          <label className="text-xs text-gray-400 block mb-1">From</label>
+          <label className="text-xs text-muted-foreground block mb-1">From</label>
           <input 
             type="date" 
             required
             value={startDate}
-            className="w-full bg-[#111111] border border-[#333] p-2.5 rounded-lg text-white text-sm focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm focus:border-primary outline-none cursor-pointer"
             onChange={(e) => setStartDate(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs text-gray-400 block mb-1">To</label>
+          <label className="text-xs text-muted-foreground block mb-1">To</label>
           <input 
             type="date" 
             required
             min={startDate}
             value={endDate}
-            className="w-full bg-[#111111] border border-[#333] p-2.5 rounded-lg text-white text-sm focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm focus:border-primary outline-none cursor-pointer"
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-xs text-gray-400 block mb-1">Reason</label>
+          <label className="text-xs text-muted-foreground block mb-1">Reason</label>
           <textarea 
             required
             value={reason}
-            className="w-full bg-[#111111] border border-[#333] p-2.5 rounded-lg text-white text-sm h-24 focus:border-[#ff8c00] outline-none resize-none"
+            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm h-24 focus:border-primary outline-none resize-none"
             onChange={(e) => setReason(e.target.value)}
           />
         </div>
         <Button 
           type="submit" 
           disabled={loading}
-          className="w-full bg-[#ff8c00] text-black font-bold hover:bg-[#e67e00] cursor-pointer h-10"
+          className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 cursor-pointer h-10"
         >
           {loading ? "Submitting..." : "Submit Request"}
         </Button>

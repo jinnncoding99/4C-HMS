@@ -188,8 +188,8 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
     setReplacingReceipt(true);
     try {
       const fileExt = newReceiptFile.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `receipts/settlements_${fileName}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `settlements_${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('receipts')
@@ -276,21 +276,21 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
   };
 
   return (
-    <div className="w-full space-y-4 text-white relative">
+    <div className="w-full space-y-4 text-foreground relative">
       {/* Header section */}
-      <div className="flex flex-col border-b border-[#333] pb-4 gap-4 relative">
+      <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
         {onBack && (
           <div className="flex justify-between items-center">
             <Button 
               onClick={onBack}
               title="Return"
-              className="md:hidden bg-[#222] border border-[#333] hover:bg-[#333] text-gray-300 hover:text-white h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
+              className="md:hidden bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
             >
               <ArrowLeft size={18} />
             </Button>
             <button 
               onClick={onBack}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-gray-400 hover:text-white transition cursor-pointer text-xs font-bold bg-[#222] border border-[#333] px-3 py-1.5 rounded-lg"
+              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-muted border border-border px-3 py-1.5 rounded-lg"
             >
               <X size={14} /> Close
             </button>
@@ -299,25 +299,25 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
 
         <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-center lg:text-left">
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-            <div className="p-2.5 bg-[#ff8c00]/10 border border-[#ff8c00]/30 rounded-xl text-[#ff8c00] shrink-0">
+            <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
               <History size={26} />
             </div>
             <div className="space-y-0.5">
               <h3 className="text-xl font-bold">Bill & Expense History</h3>
-              <p className="text-sm text-gray-400">Review all settled bills, expenses, and transaction logs.</p>
+              <p className="text-sm text-muted-foreground">Review all settled bills, expenses, and transaction logs.</p>
             </div>
           </div>
           
           <div className="flex items-center justify-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0">
             <Button 
               onClick={handleGenerateReport} 
-              className="bg-[#ff8c00] text-black hover:bg-[#e07b00] font-semibold text-xs cursor-pointer flex items-center gap-1.5 h-9"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs cursor-pointer flex items-center gap-1.5 h-9"
             >
               <Download size={14} /> Generate Report
             </Button>
             <Button 
               onClick={fetchHistoryData} 
-              className="bg-[#222] border border-[#333] text-gray-300 hover:text-white text-xs cursor-pointer h-9"
+              className="bg-muted border border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer h-9"
             >
               Refresh Logs
             </Button>
@@ -325,14 +325,13 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
         </div>
       </div>
 
-      {/* Filter Toolbar (Type Filter & Date Range Filter) */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-[#111] p-3 rounded-xl border border-[#333] text-xs">
-        {/* Category Filter Tabs */}
-        <div className="flex items-center gap-1 bg-[#1a1a1a] p-1 rounded-lg border border-[#333] w-full lg:w-auto justify-center">
+      {/* Filter Toolbar */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border w-full lg:w-auto justify-center">
           <button
             onClick={() => setFilterType('all')}
             className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'all' ? 'bg-[#ff8c00] text-black' : 'text-gray-400 hover:text-white'
+              filterType === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All
@@ -340,7 +339,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
           <button
             onClick={() => setFilterType('bill')}
             className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'bill' ? 'bg-[#ff8c00] text-black' : 'text-gray-400 hover:text-white'
+              filterType === 'bill' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Bills
@@ -348,35 +347,34 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
           <button
             onClick={() => setFilterType('expense')}
             className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'expense' ? 'bg-[#ff8c00] text-black' : 'text-gray-400 hover:text-white'
+              filterType === 'expense' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Expenses
           </button>
         </div>
 
-        {/* Date Range Selector */}
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="text-gray-400 flex items-center gap-1 font-medium">
-            <Calendar size={14} className="text-[#ff8c00]" /> Date:
+          <span className="text-muted-foreground flex items-center gap-1 font-medium">
+            <Calendar size={14} className="text-primary" /> Date:
           </span>
           <input 
             type="date" 
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#333] text-white px-2 py-1.5 rounded-lg focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
           />
-          <span className="text-gray-500">to</span>
+          <span className="text-muted-foreground">to</span>
           <input 
             type="date" 
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#333] text-white px-2 py-1.5 rounded-lg focus:border-[#ff8c00] outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
           />
           {(startDate || endDate) && (
             <button 
               onClick={() => { setStartDate(''); setEndDate(''); }} 
-              className="text-[#ff8c00] hover:underline ml-2 cursor-pointer"
+              className="text-primary hover:underline ml-2 cursor-pointer"
             >
               Clear
             </button>
@@ -387,7 +385,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
       {/* Content List */}
       <div className="space-y-3 min-h-[300px]">
         {loading ? (
-          <p className="text-center text-gray-500 py-12 text-sm">Loading logs...</p>
+          <p className="text-center text-muted-foreground py-12 text-sm">Loading logs...</p>
         ) : filteredTransactions.length > 0 ? (
           <div className="space-y-2">
             {filteredTransactions.map(tx => (
@@ -400,42 +398,42 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   setValidationMessage("");
                   setViewingReceipt(false);
                 }}
-                className="bg-[#111] p-4 rounded-lg border border-[#333] hover:border-[#ff8c00]/50 transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs"
+                className="bg-card p-4 rounded-lg border border-border hover:border-primary/50 transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-white text-sm">{tx.description}</p>
+                    <p className="font-semibold text-foreground text-sm">{tx.description}</p>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
                       tx.source_type === 'expense' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                     }`}>
                       {tx.source_type}
                     </span>
                   </div>
-                  <p className="text-[11px] text-gray-400">
-                    Receiver: <span className="text-white font-medium">{tx.payment_receiver || 'N/A'}</span> {tx.billing_period_start && `• Period: ${tx.billing_period_start} to ${tx.billing_period_end || 'N/A'}`}
+                  <p className="text-[11px] text-muted-foreground">
+                    Receiver: <span className="text-foreground font-medium">{tx.payment_receiver || 'N/A'}</span> {tx.billing_period_start && `• Period: ${tx.billing_period_start} to ${tx.billing_period_end || 'N/A'}`}
                   </p>
                 </div>
                 <div className="text-left sm:text-right space-y-1 w-full sm:w-auto flex sm:block justify-between items-center">
                   <span className="bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase inline-block">
                     Recorded
                   </span>
-                  <p className="font-bold text-[#ff8c00] text-sm">₱{Number(tx.total_amount).toFixed(2)}</p>
+                  <p className="font-bold text-primary text-sm">₱{Number(tx.total_amount).toFixed(2)}</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500 py-12 text-xs italic">No records found matching this filter or date range.</p>
+          <p className="text-center text-muted-foreground py-12 text-xs italic">No records found matching this filter or date range.</p>
         )}
       </div>
 
       {/* Detailed Transaction Info Modal */}
       {selectedTx && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#ff8c00] w-full max-w-lg shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-[#333] pb-3">
-              <h4 className="font-bold text-base text-white flex items-center gap-2">
-                <FileText size={18} className="text-[#ff8c00]" /> 
+          <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-lg shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto text-card-foreground">
+            <div className="flex justify-between items-center border-b border-border pb-3">
+              <h4 className="font-bold text-base flex items-center gap-2">
+                <FileText size={18} className="text-primary" /> 
                 {viewingReceipt ? "View Receipt Image" : "Record Details"}
               </h4>
               <button 
@@ -443,39 +441,38 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   setSelectedTx(null);
                   setViewingReceipt(false);
                 }}
-                className="text-gray-400 hover:text-white cursor-pointer"
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {!viewingReceipt ? (
-              // Normal Detail View
               <>
-                <div className="space-y-2.5 text-xs text-gray-300">
-                  <div className="bg-[#111] p-3 rounded-lg border border-[#333] space-y-1.5">
-                    <p><span className="text-gray-500">Record ID:</span> {selectedTx.id}</p>
-                    <p><span className="text-gray-500">Type:</span> <span className="uppercase text-white font-medium">{selectedTx.source_type}</span></p>
-                    <p><span className="text-gray-500">Description:</span> <span className="text-white font-medium">{selectedTx.description}</span></p>
-                    <p><span className="text-gray-500">Payment Receiver:</span> <span className="text-white font-medium">{selectedTx.payment_receiver || 'N/A'}</span></p>
-                    <p><span className="text-gray-500">Total Amount:</span> <span className="text-[#ff8c00] font-bold">₱{Number(selectedTx.total_amount || 0).toFixed(2)}</span></p>
+                <div className="space-y-2.5 text-xs text-muted-foreground">
+                  <div className="bg-muted p-3 rounded-lg border border-border space-y-1.5">
+                    <p><span className="text-muted-foreground">Record ID:</span> {selectedTx.id}</p>
+                    <p><span className="text-muted-foreground">Type:</span> <span className="uppercase text-foreground font-medium">{selectedTx.source_type}</span></p>
+                    <p><span className="text-muted-foreground">Description:</span> <span className="text-foreground font-medium">{selectedTx.description}</span></p>
+                    <p><span className="text-muted-foreground">Payment Receiver:</span> <span className="text-foreground font-medium">{selectedTx.payment_receiver || 'N/A'}</span></p>
+                    <p><span className="text-muted-foreground">Total Amount:</span> <span className="text-primary font-bold">₱{Number(selectedTx.total_amount || 0).toFixed(2)}</span></p>
                     {selectedTx.billing_period_start && (
-                      <p><span className="text-gray-500">Billing Period:</span> {selectedTx.billing_period_start} to {selectedTx.billing_period_end || 'N/A'}</p>
+                      <p><span className="text-muted-foreground">Billing Period:</span> {selectedTx.billing_period_start} to {selectedTx.billing_period_end || 'N/A'}</p>
                     )}
-                    <p><span className="text-gray-500">Date Settled/Created:</span> {selectedTx.settled_at ? new Date(selectedTx.settled_at).toLocaleString() : 'N/A'}</p>
+                    <p><span className="text-muted-foreground">Date Settled/Created:</span> {selectedTx.settled_at ? new Date(selectedTx.settled_at).toLocaleString() : 'N/A'}</p>
 
-                    <div className="pt-2 border-t border-[#222]">
-                      <span className="text-gray-500 block mb-1">Receipt Proof:</span>
+                    <div className="pt-2 border-t border-border">
+                      <span className="text-muted-foreground block mb-1">Receipt Proof:</span>
                       {selectedTx.url_receipt ? (
                         <Button 
                           type="button"
                           onClick={() => setViewingReceipt(true)}
-                          className="bg-[#222] hover:bg-[#333] border border-[#333] text-[#ff8c00] font-semibold text-xs h-8 px-3 inline-flex items-center gap-1.5 cursor-pointer"
+                          className="bg-muted hover:bg-accent border border-border text-primary font-semibold text-xs h-8 px-3 inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <Eye size={14} /> View Receipt Image
                         </Button>
                       ) : (
-                        <span className="text-gray-500 italic">No receipt attached</span>
+                        <span className="text-muted-foreground italic">No receipt attached</span>
                       )}
                     </div>
                   </div>
@@ -484,48 +481,46 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                 <div className="flex justify-end pt-2">
                   <Button 
                     onClick={() => setSelectedTx(null)}
-                    className="bg-[#222] border border-[#333] text-white hover:bg-[#333] text-xs h-8 cursor-pointer"
+                    className="bg-muted border border-border text-foreground hover:bg-accent text-xs h-8 cursor-pointer"
                   >
                     Close
                   </Button>
                 </div>
               </>
             ) : (
-              // Inline Receipt Viewer Sub-Modal Content
               <div className="space-y-4 text-xs">
-                <div className="flex items-center justify-between border-b border-[#333] pb-2">
+                <div className="flex items-center justify-between border-b border-border pb-2">
                   <button 
                     onClick={() => setViewingReceipt(false)}
-                    className="flex items-center gap-1.5 text-gray-300 hover:text-white cursor-pointer bg-[#222] border border-[#333] px-2.5 py-1.5 rounded-lg font-medium"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer bg-muted border border-border px-2.5 py-1.5 rounded-lg font-medium"
                   >
                     <ArrowLeft size={14} /> Return to Details
                   </button>
                   <Button 
                     type="button"
                     onClick={() => handleDownloadReceipt(selectedTx.url_receipt)}
-                    className="bg-[#ff8c00] hover:bg-[#e07b00] text-black font-semibold text-xs h-8 px-3 inline-flex items-center gap-1.5 cursor-pointer"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs h-8 px-3 inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download size={14} /> Download Receipt
                   </Button>
                 </div>
 
-                <div className="bg-[#111] p-3 rounded-lg border border-[#333] flex justify-center items-center overflow-hidden">
+                <div className="bg-muted p-3 rounded-lg border border-border flex justify-center items-center overflow-hidden">
                   <img 
                     src={selectedTx.url_receipt || ''} 
                     alt="Receipt Proof" 
-                    className="max-h-[350px] object-contain rounded border border-[#333]" 
+                    className="max-h-[350px] object-contain rounded border border-border" 
                   />
                 </div>
 
-                {/* Replacement section */}
                 {isPaymentReceiver(selectedTx) && isWithinFiveDays(selectedTx.settled_at) ? (
-                  <div className="p-3 bg-[#181818] rounded border border-[#ff8c00]/40 space-y-2">
-                    <p className="text-[11px] text-gray-300 font-semibold">Payment Receiver Access: Replace this receipt</p>
+                  <div className="p-3 bg-muted rounded border border-primary/40 space-y-2">
+                    <p className="text-[11px] text-muted-foreground font-semibold">Payment Receiver Access: Replace this receipt</p>
                     <input 
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleNewReceiptFileChange(e.target.files?.[0] || null)}
-                      className="w-full text-xs text-gray-300 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-[#ff8c00] file:text-black hover:file:bg-[#e67e00] file:cursor-pointer bg-[#111] border border-[#333] rounded p-1 cursor-pointer"
+                      className="w-full text-xs text-foreground file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[11px] file:font-bold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer bg-card border border-border rounded p-1 cursor-pointer"
                     />
 
                     {newReceiptFile && (
@@ -560,21 +555,21 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                         type="button"
                         disabled={replacingReceipt || isScanning || !isReplacementValid}
                         onClick={handleReplaceReceipt}
-                        className="bg-[#ff8c00] hover:bg-[#e67e00] disabled:opacity-50 text-black font-bold text-xs h-8 w-full cursor-pointer mt-1"
+                        className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-xs h-8 w-full cursor-pointer mt-1"
                       >
                         {replacingReceipt ? "Uploading..." : isScanning ? "Verifying..." : "Confirm Receipt Replacement"}
                       </Button>
                     )}
                   </div>
                 ) : (
-                  <div className="p-2.5 bg-[#111] rounded border border-[#333] text-center space-y-1">
-                    <p className="text-[11px] text-gray-400 font-medium">
+                  <div className="p-2.5 bg-muted rounded border border-border text-center space-y-1">
+                    <p className="text-[11px] text-muted-foreground font-medium">
                       {isPaymentReceiver(selectedTx) 
                         ? "Payment Receiver Access Active" 
                         : `Note: Only the designated payment receiver (${selectedTx.payment_receiver || 'N/A'}) can replace this receipt.`}
                     </p>
                     {!isWithinFiveDays(selectedTx.settled_at) && (
-                      <p className="text-[10px] text-gray-500 italic">The 5-day window to replace this receipt has expired.</p>
+                      <p className="text-[10px] text-muted-foreground/75 italic">The 5-day window to replace this receipt has expired.</p>
                     )}
                   </div>
                 )}

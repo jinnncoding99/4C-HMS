@@ -2,10 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, User as UserIcon, LogOut, QrCode, Edit2, Users, Bell, Check, X, Plane, CreditCard, Sun, Moon } from "lucide-react";
+import { ShieldCheck, User as UserIcon, LogOut, QrCode, Edit2, Users, Bell, Check, X, Plane, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client"; 
-import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
 
 interface DashboardHeaderProps {
   title: string;
@@ -45,7 +43,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
-  const { theme, setTheme } = useTheme();
 
   // Robust case-insensitive check for Admin role
   const isAdmin = role?.trim().toLowerCase() === 'admin';
@@ -360,19 +357,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        {/* Theme Toggle Button */}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="rounded-xl border-[#98BDFF] dark:border-[#ff8c00]/30 bg-[#F0F2F5]/60 dark:bg-[#222] text-[#4B49AC] dark:text-[#ff8c00] hover:bg-[#4B49AC] hover:text-white dark:hover:bg-[#ff8c00] dark:hover:text-black transition h-10 w-10 p-0 flex items-center justify-center cursor-pointer shadow-sm"
-          title="Toggle Theme"
-        >
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}

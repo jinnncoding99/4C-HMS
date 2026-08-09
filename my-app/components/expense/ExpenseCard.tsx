@@ -67,52 +67,52 @@ export default function ExpenseCard({
   onDelete,
 }: ExpenseCardProps) {
   return (
-    <div className="p-5 border border-zinc-800/80 rounded-xl bg-zinc-900/60 hover:border-zinc-700 transition-all space-y-4 shadow-sm">
+    <div className="p-5 border border-slate-200 dark:border-zinc-800/80 rounded-xl bg-white dark:bg-zinc-900/60 hover:border-slate-300 dark:hover:border-zinc-700 transition-all space-y-4 shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h4 className="font-semibold text-base text-white">{expense.description}</h4>
+            <h4 className="font-semibold text-base text-slate-900 dark:text-white">{expense.description}</h4>
             {(allSharesArePaid || expense.status === 'paid' || expense.is_paid) && (
-              <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-medium px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-medium px-2.5 py-0.5 rounded-full">
                 <CheckCircle className="h-3 w-3" /> Settled
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4 text-xs text-zinc-400 flex-wrap">
-            <span>Date: <span className="text-zinc-300">{expense.expense_date || 'N/A'}</span></span>
+          <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 flex-wrap">
+            <span>Date: <span className="text-slate-700 dark:text-zinc-300">{expense.expense_date || 'N/A'}</span></span>
             <span>•</span>
-            <span>Payment Receiver: <span className="text-amber-400 font-medium">{receiverName}</span></span>
+            <span>Payment Receiver: <span className="text-[#4B49AC] dark:text-amber-400 font-medium">{receiverName}</span></span>
           </div>
         </div>
         <div className="text-left sm:text-right mt-2 sm:mt-0">
-          <span className="text-xs text-zinc-400 block">Total Amount</span>
-          <span className="font-bold text-lg text-amber-500">₱{Number(expense.total_amount).toFixed(2)}</span>
+          <span className="text-xs text-slate-500 dark:text-zinc-400 block">Total Amount</span>
+          <span className="font-bold text-lg text-[#4B49AC] dark:text-amber-500">₱{Number(expense.total_amount).toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-3 border-t border-zinc-800/60 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-3 border-t border-slate-100 dark:border-zinc-800/60 gap-3">
         <div>
-          <span className="text-xs text-zinc-400 block">{isReceiver ? "Role Status" : "Your Net Share Due"}</span>
+          <span className="text-xs text-slate-500 dark:text-zinc-400 block">{isReceiver ? "Role Status" : "Your Net Share Due"}</span>
           <div className="text-sm font-semibold mt-0.5">
             {isReceiver ? (
-              <span className="text-amber-400 text-xs font-medium bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+              <span className="text-[#4B49AC] dark:text-amber-400 text-xs font-medium bg-[#4B49AC]/10 dark:bg-amber-500/10 px-2 py-0.5 rounded border border-[#4B49AC]/20 dark:border-amber-500/20">
                 Payment Receiver (Auto-credited upon collection)
               </span>
             ) : myBreakdown ? (
               isMySharePaid ? (
-                <span className="text-emerald-400 flex items-center gap-1 text-xs">
+                <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs">
                   <CheckCircle className="h-3.5 w-3.5" /> ₱0.00 (Fully Paid)
                 </span>
               ) : (
                 <div>
-                  <span className="text-zinc-100 font-bold">₱{netUserShareDue.toFixed(2)}</span>
+                  <span className="text-slate-900 dark:text-zinc-100 font-bold">₱{netUserShareDue.toFixed(2)}</span>
                   {userPaidAmount > 0 && (
-                    <span className="text-[11px] text-zinc-400 ml-2">(Paid: ₱{userPaidAmount.toFixed(2)} of ₱{userShareDue.toFixed(2)})</span>
+                    <span className="text-[11px] text-slate-500 dark:text-zinc-400 ml-2">(Paid: ₱{userPaidAmount.toFixed(2)} of ₱{userShareDue.toFixed(2)})</span>
                   )}
                 </div>
               )
             ) : (
-              <span className="text-zinc-500 italic text-xs">Not included in this breakdown</span>
+              <span className="text-slate-400 dark:text-zinc-500 italic text-xs">Not included in this breakdown</span>
             )}
           </div>
         </div>
@@ -120,13 +120,13 @@ export default function ExpenseCard({
         <div className="flex items-center gap-2.5 self-end sm:self-auto flex-wrap">
           {!isReceiver && myBreakdown && netUserShareDue > 0 && !allSharesArePaid && (
             hasPendingSubmission ? (
-              <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 font-medium bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-lg">
+              <span className="inline-flex items-center gap-1.5 text-xs text-[#4B49AC] dark:text-amber-400 font-medium bg-[#4B49AC]/10 dark:bg-amber-500/10 border border-[#4B49AC]/30 dark:border-amber-500/30 px-3 py-1.5 rounded-lg">
                 <Clock className="h-3.5 w-3.5 animate-pulse" /> Pending Approval
               </span>
             ) : (
               <Button 
                 onClick={() => onOpenPayModal(expense, userShareDue, userPaidAmount)}
-                className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold text-xs h-9 px-4 shadow-sm"
+                className="bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold text-xs h-9 px-4 shadow-sm"
               >
                 Pay Share
               </Button>
@@ -137,7 +137,7 @@ export default function ExpenseCard({
             <Button
               type="button"
               onClick={() => onOpenSettleModal(expense)}
-              className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold text-xs h-9 px-4 shadow-sm"
+              className="bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold text-xs h-9 px-4 shadow-sm"
             >
               Settle Bill Payment
             </Button>
@@ -146,7 +146,7 @@ export default function ExpenseCard({
           {isReceiver && (
             <div className="flex items-center gap-2">
               {(allSharesArePaid || expense.status === 'paid' || expense.is_paid) && (
-                <span className="text-xs text-emerald-400 font-medium flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
                   <CheckCircle className="h-3.5 w-3.5" /> Completed
                 </span>
               )}
@@ -161,7 +161,7 @@ export default function ExpenseCard({
                       e.stopPropagation();
                       onEdit(expense);
                     }} 
-                    className="border-zinc-700 bg-zinc-900 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 text-xs h-8 px-2.5"
+                    className="border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-700 dark:hover:text-blue-300 text-xs h-8 px-2.5"
                     title="Edit Expense"
                   >
                     <Edit className="h-3.5 w-3.5 mr-1" /> Edit
@@ -174,7 +174,7 @@ export default function ExpenseCard({
                       e.stopPropagation();
                       onDelete(expense.id);
                     }} 
-                    className="border-zinc-700 bg-zinc-900 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 text-xs h-8 px-2.5"
+                    className="border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300 text-xs h-8 px-2.5"
                     title="Delete Expense"
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
@@ -189,7 +189,7 @@ export default function ExpenseCard({
       <div className="pt-2">
         <button 
           onClick={() => onToggleExpand(expense.id)}
-          className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-medium focus:outline-none transition-colors"
+          className="text-xs text-[#4B49AC] dark:text-amber-400 hover:text-[#3f3de9] dark:hover:text-amber-300 flex items-center gap-1 font-medium focus:outline-none transition-colors"
         >
           {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           {isExpanded ? "Hide Member Breakdown" : `View Member Breakdown (${breakdown.length} Participants)`}

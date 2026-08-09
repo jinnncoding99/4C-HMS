@@ -140,26 +140,26 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="p-6 bg-[#111111] min-h-screen text-white">
-      <Button variant="ghost" className="mb-4 text-gray-400 hover:text-[#ff8c00] pl-0 cursor-pointer" onClick={() => router.push('/dashboard')}>
+    <div className="p-6 bg-background min-h-screen text-foreground">
+      <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-primary pl-0 cursor-pointer" onClick={() => router.push('/dashboard')}>
         <ArrowLeft size={18} className="mr-2" /> Back to Dashboard
       </Button>
 
-      <h2 className="text-2xl font-bold mb-6 border-b border-[#ff8c00] pb-2 flex items-center gap-3">
-        <Bell className="text-[#ff8c00]" /> Notifications
+      <h2 className="text-2xl font-bold mb-6 border-b border-primary pb-2 flex items-center gap-3">
+        <Bell className="text-primary" /> Notifications
       </h2>
 
       <div className="space-y-4">
         {notifications.length === 0 ? (
-          <p className="text-gray-500 text-center py-10">No pending notifications found.</p>
+          <p className="text-muted-foreground text-center py-10">No pending notifications found.</p>
         ) : (
           notifications.map((notif) => (
-            <Card key={notif.id} className="p-4 bg-[#1a1a1a] border border-[#ff8c00] flex justify-between items-center cursor-pointer hover:bg-[#222] transition" onClick={() => setSelectedNotif(notif)}>
+            <Card key={notif.id} className="p-4 bg-card border border-border flex justify-between items-center cursor-pointer hover:border-primary/50 transition" onClick={() => setSelectedNotif(notif)}>
               <div className="flex items-center gap-4">
-                <div className="text-[#ff8c00]">{getIcon(notif.type)}</div>
+                <div className="text-primary">{getIcon(notif.type)}</div>
                 <div className="flex flex-col">
-                  <span className="text-[#ff8c00] text-[10px] font-bold uppercase tracking-widest">{notif.type?.replace('_', ' ')}</span>
-                  <p className="font-bold text-white">{notif.email || "System Notification"}</p>
+                  <span className="text-primary text-[10px] font-bold uppercase tracking-widest">{notif.type?.replace('_', ' ')}</span>
+                  <p className="font-bold text-foreground">{notif.email || "System Notification"}</p>
                 </div>
               </div>
             </Card>
@@ -168,13 +168,13 @@ export default function NotificationsPage() {
       </div>
 
       {selectedNotif && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[9999]">
-          <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#ff8c00] w-full max-w-sm">
-            <h3 className="text-lg font-bold text-white mb-4">Process {selectedNotif.type?.replace('_', ' ')}</h3>
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-sm text-card-foreground shadow-2xl">
+            <h3 className="text-lg font-bold text-foreground mb-4">Process {selectedNotif.type?.replace('_', ' ')}</h3>
             
-            <div className="bg-[#111111] p-3 rounded-lg mb-4 border border-[#333]">
-              <p className="text-sm font-bold text-[#ff8c00]">{selectedNotif.email || "System"}</p>
-              <p className="text-xs text-gray-400 mt-1">{selectedNotif.message}</p>
+            <div className="bg-muted p-3 rounded-lg mb-4 border border-border">
+              <p className="text-sm font-bold text-primary">{selectedNotif.email || "System"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{selectedNotif.message}</p>
               {selectedNotif.details?.receipt_url && (
                 <a 
                   href={selectedNotif.details.receipt_url} 
@@ -188,16 +188,16 @@ export default function NotificationsPage() {
             </div>
 
             {selectedNotif.type === 'vacation' && parseVacationMessage(selectedNotif.message) && (
-              <div className="bg-[#222] p-3 rounded-lg mb-4 border border-[#444]">
-                <p className="text-xs text-gray-300">Duration: <strong>{parseVacationMessage(selectedNotif.message)?.days} days</strong></p>
+              <div className="bg-muted p-3 rounded-lg mb-4 border border-border">
+                <p className="text-xs text-muted-foreground">Duration: <strong className="text-foreground">{parseVacationMessage(selectedNotif.message)?.days} days</strong></p>
               </div>
             )}
 
             <div className="flex gap-4">
-              <Button onClick={() => handleAction(true)} className="flex-1 bg-[#ff8c00] hover:bg-[#e67e00] text-black font-bold cursor-pointer">Approve</Button>
+              <Button onClick={() => handleAction(true)} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer">Approve</Button>
               <Button onClick={() => handleAction(false)} variant="destructive" className="flex-1 cursor-pointer">Reject</Button>
             </div>
-            <Button variant="ghost" onClick={() => setSelectedNotif(null)} className="w-full mt-2 text-gray-500 cursor-pointer">Cancel</Button>
+            <Button variant="ghost" onClick={() => setSelectedNotif(null)} className="w-full mt-2 text-muted-foreground hover:text-foreground cursor-pointer">Cancel</Button>
           </div>
         </div>
       )}
