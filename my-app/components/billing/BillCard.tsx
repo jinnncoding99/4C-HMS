@@ -33,11 +33,35 @@ export const BillCard = ({
   onDeleteBill,
   userPaymentRequests,
 }: BillCardProps) => {
-  const validDays = breakdown.map((b) => Number(b.daysPresent)).filter((d) => !isNaN(d) && d > 0);
+  const normalizedBreakdown = (breakdown || []).map((b) => ({
+    ...b,
+    id: b.id || b.boarder_id,
+    shareDue: b.shareDue ?? b.shared_amount ?? 0,
+    paidAmount: b.paidAmount ?? b.paid_amount ?? 0,
+    daysPresent: b.daysPresent ?? b.days_present ?? 0,
+    isPaid: b.isPaid ?? b.is_paid ?? false,
+  }));
+
+  const validDays = normalizedBreakdown.map((b) => Number(b.daysPresent)).filter((d) => !isNaN(d) && d > 0);
   const totalDays = validDays.length > 0 ? Math.max(...validDays) : Number(bill.total_members) > 0 ? 30 : 31;
 
-  const myBreakdown = breakdown.find((b) => b.id === activeUserId);
-  const userShareDue = myBreakdown ? myBreakdown.shareDue : 0;
+  const myBreakdown = normalizedBreakdown.find((b) => b.id === activeUserId);
+  const totalBillAmount = Number(bill.total_amount) || 0;
+
+  const isPaymentReceiver = bill.payment_receiver_id === activeUserId;
+  const nonReceiverShares = normalizedBreakdown.filter((b) => b.id !== bill.payment_receiver_id);
+  const allOthersPaid = nonReceiverShares.length > 0 && nonReceiverShares.every((b) => b.isPaid || b.status === 'paid');
+
+  const totalCollectedFromOthers = nonReceiverShares.reduce((sum, b) => sum + Number(b.paidAmount || 0), 0);
+  const receiverBaseShare = myBreakdown ? Number(myBreakdown.shareDue) : 0;
+
+  const userShareDue = isPaymentReceiver 
+    ? receiverBaseShare + totalCollectedFromOthers
+    : (myBreakdown ? Math.max(0, Number(myBreakdown.shareDue) - Number(myBreakdown.paidAmount || 0)) : 0);
+
+  // "Settle Bill" button will only appear if and only if receiver's due matches the total bill amount
+  const isReceiverFullyAccumulated = isPaymentReceiver && Math.abs(userShareDue - totalBillAmount) < 0.01;
+
   const isMySharePaid = myBreakdown?.isPaid || myBreakdown?.status === 'paid';
 
   const hasPendingSubmission =
@@ -45,12 +69,8 @@ export const BillCard = ({
     myBreakdown?.status === 'pending_approval';
 
   const hasAnyActivity =
-    breakdown.some((b) => b.status === 'pending_approval' || b.status === 'paid' || b.isPaid) ||
+    normalizedBreakdown.some((b) => b.status === 'pending_approval' || b.status === 'paid' || b.isPaid) ||
     userPaymentRequests.some((req) => req.details?.bill_id === bill.id);
-
-  const isPaymentReceiver = bill.payment_receiver_id === activeUserId;
-  const nonReceiverShares = breakdown.filter((b) => b.id !== bill.payment_receiver_id);
-  const allOthersPaid = nonReceiverShares.length > 0 && nonReceiverShares.every((b) => b.isPaid || b.status === 'paid');
 
   return (
     <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors">
@@ -71,7 +91,7 @@ export const BillCard = ({
         </div>
         <div className="text-right">
           <p className="text-sm text-slate-500 dark:text-gray-400">Total Bill Due</p>
-          <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{Number(bill.total_amount).toFixed(2)}</p>
+          <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{totalBillAmount.toFixed(2)}</p>
         </div>
       </div>
 
@@ -79,40 +99,56 @@ export const BillCard = ({
         <div>
           <p className="text-xs text-slate-500 dark:text-gray-400">Your Share Due:</p>
           <p className="text-md font-bold text-slate-900 dark:text-white">
-            {myBreakdown ? (
-              isMySharePaid ? (
-                <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+            {isPaymentReceiver ? (
+              allOthersPaid ? (
+                isMySharePaid ? (
+                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                ) : (
+                  `₱${userShareDue.toFixed(2)}`
+                )
               ) : (
-                `₱${userShareDue.toFixed(2)}`
+                <span className="text-[#4B49AC] dark:text-[#ff8c00]">
+                  ₱{userShareDue.toFixed(2)} <span className="text-[10px] font-normal text-slate-500">(Base + Collected: ₱{totalCollectedFromOthers.toFixed(2)})</span>
+                </span>
               )
             ) : (
-              <span className="text-slate-400 dark:text-gray-500 italic text-xs">Not included in this bill</span>
+              myBreakdown ? (
+                isMySharePaid ? (
+                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                ) : (
+                  `₱${userShareDue.toFixed(2)}`
+                )
+              ) : (
+                <span className="text-slate-400 dark:text-gray-500 italic text-xs">Not included in this bill</span>
+              )
             )}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {isPaymentReceiver && allOthersPaid && (
-            <Button
-              onClick={() => onSettleBill(bill)}
-              className="bg-emerald-600 hover:bg-emerald-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
-            >
-              Mark as Settled
-            </Button>
-          )}
-
-          {myBreakdown && userShareDue > 0 && !isMySharePaid && !isDanz && !isPaymentReceiver && (
-            hasPendingSubmission ? (
-              <span className="text-xs text-amber-600 dark:text-yellow-500 font-semibold bg-amber-500/10 dark:bg-yellow-500/10 border border-amber-500/30 dark:border-yellow-500/30 px-3 py-1.5 rounded-md">
-                Pending Approval
-              </span>
-            ) : (
+          {isPaymentReceiver ? (
+            isReceiverFullyAccumulated ? (
               <Button
-                onClick={() => onPayNow(bill, userShareDue)}
-                className="bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                onClick={() => onSettleBill(bill)}
+                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
               >
-                Pay Now
+                Mark as Settled
               </Button>
+            ) : null
+          ) : (
+            myBreakdown && userShareDue > 0 && !isMySharePaid && !isDanz && (
+              hasPendingSubmission ? (
+                <span className="text-xs text-amber-600 dark:text-yellow-500 font-semibold bg-amber-500/10 dark:bg-yellow-500/10 border border-amber-500/30 dark:border-yellow-500/30 px-3 py-1.5 rounded-md">
+                  Pending Approval
+                </span>
+              ) : (
+                <Button
+                  onClick={() => onPayNow(bill, userShareDue)}
+                  className="bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                >
+                  Pay Now
+                </Button>
+              )
             )
           )}
 
@@ -161,14 +197,15 @@ export const BillCard = ({
           className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
         >
           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {isExpanded ? "Hide Member Breakdown & Days" : "See More Info (Member Shares & Prorated Days)"}
+          {isExpanded ? "Hide Member Breakdown & Days" : `See More Info (Member Shares & Prorated Days) • ${normalizedBreakdown.length} Participants`}
         </button>
 
         {isExpanded && (
           <BillBreakdown 
-            breakdown={breakdown} 
+            breakdown={normalizedBreakdown} 
             totalDays={totalDays} 
             paymentReceiverId={bill.payment_receiver_id} 
+            totalBillAmount={totalBillAmount}
           />
         )}
       </div>

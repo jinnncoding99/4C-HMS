@@ -25,15 +25,16 @@ interface Profile {
 
 interface BillFormProps {
   initialData?: BillItem;
+  profiles?: Profile[];
   onSuccess: () => void;
   onCancel?: () => void;
 }
 
-export default function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
+export default function BillForm({ initialData, profiles: propProfiles, onSuccess, onCancel }: BillFormProps) {
   const isEditing = !!initialData?.id;
   const router = useRouter();
   
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>(propProfiles || []);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [shareMode, setShareMode] = useState<"all" | "custom">("all");
   const [loading, setLoading] = useState(false);
@@ -52,8 +53,13 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: profileData } = await supabase.from("profiles").select("id, email, username");
-      if (profileData) {
+      let profileData = propProfiles;
+      if (!profileData || profileData.length === 0) {
+        const { data } = await supabase.from("profiles").select("id, email, username");
+        if (data) profileData = data;
+      }
+
+      if (profileData && profileData.length > 0) {
         setProfiles(profileData);
 
         if (isEditing && initialData?.id) {
@@ -81,7 +87,7 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
       }
     };
     fetchData();
-  }, [supabase, initialData, isEditing]);
+  }, [supabase, initialData, isEditing, propProfiles]);
 
   const handleShareModeChange = (mode: "all" | "custom") => {
     setShareMode(mode);
@@ -114,7 +120,7 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
       const startDate = formData.from ? new Date(formData.from + 'T00:00:00') : null;
       const endDate = formData.to ? new Date(formData.to + 'T00:00:00') : null;
 
-      let memberShares: { boarder_id: string; shared_amount: number; days_present: number }[] = [];
+      let memberShares: any[] = [];
 
       if (formData.calculationType === 'prorated' && startDate && endDate) {
         const totalBillingDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1);
@@ -161,8 +167,12 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
           selectedMembers.forEach(id => {
             memberShares.push({ 
               boarder_id: id, 
+              user_id: id,
               shared_amount: splitAmount, 
-              days_present: totalBillingDays
+              shareDue: splitAmount,
+              days_present: totalBillingDays,
+              status: 'unpaid',
+              is_paid: false
             });
           });
         } else {
@@ -172,8 +182,12 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
             
             memberShares.push({ 
               boarder_id: id, 
+              user_id: id,
               shared_amount: parseFloat(proratedAmount.toFixed(2)), 
-              days_present: weight
+              shareDue: parseFloat(proratedAmount.toFixed(2)),
+              days_present: weight,
+              status: 'unpaid',
+              is_paid: false
             });
           });
         }
@@ -186,8 +200,12 @@ export default function BillForm({ initialData, onSuccess, onCancel }: BillFormP
         selectedMembers.forEach(id => {
           memberShares.push({ 
             boarder_id: id, 
+            user_id: id,
             shared_amount: parseFloat(splitAmount.toFixed(2)), 
-            days_present: fallbackDays
+            shareDue: parseFloat(splitAmount.toFixed(2)),
+            days_present: fallbackDays,
+            status: 'unpaid',
+            is_paid: false
           });
         });
       }

@@ -102,10 +102,12 @@ export const BillSummary = ({
               </p>
             </div>
             
+            {/* Add Bill restricted to Admin side */}
             {isAdmin && (
               <AddBillDialog 
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
+                profiles={profiles}
                 onSuccess={fetchData}
               />
             )}

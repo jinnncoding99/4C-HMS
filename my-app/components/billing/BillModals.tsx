@@ -17,11 +17,11 @@ export const AddBillDialog = ({ isOpen, setIsOpen, onSuccess }: AddBillDialogPro
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-  <Button className="bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold transition-all shadow-sm rounded-full px-4 h-9">
-    <Plus className="h-4 w-4 mr-1.5" />
-    Add New Bill
-  </Button>
-</DialogTrigger>
+        <Button className="bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold transition-all shadow-sm rounded-full px-4 h-9">
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add New Bill
+        </Button>
+      </DialogTrigger>
       <DialogContent className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] text-slate-900 dark:text-white w-[95%] max-w-2xl max-h-[85vh] overflow-y-auto p-6 pb-12 rounded-2xl shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">Post New Bill Entry</DialogTitle>

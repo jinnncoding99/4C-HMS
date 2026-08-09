@@ -1,3 +1,4 @@
+// components/dashboard/MainDashboard.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -50,19 +51,22 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         for (const bill of billsData) {
           const { data: sharesData } = await supabase
             .from("bill_shares")
-            .select("*, profiles(username)")
+            .select("*")
             .eq("bill_id", bill.id);
           
           if (sharesData) {
-            sharesMap[bill.id] = sharesData.map((s: any) => ({
-              id: s.user_id,
-              username: s.profiles?.username || 'Unknown',
-              daysPresent: s.days_present || 0,
-              shareDue: s.share_due || 0,
-              paid_amount: s.paid_amount || 0,
-              status: s.status || 'unpaid',
-              isPaid: s.status === 'paid' || s.is_paid
-            }));
+            sharesMap[bill.id] = sharesData.map((s: any) => {
+              const matchedProfile = (profilesData || []).find((p: any) => p.id === s.boarder_id);
+              return {
+                id: s.boarder_id,
+                username: matchedProfile?.username || 'Unknown',
+                daysPresent: s.days_present || 0,
+                shareDue: s.shared_amount || 0,
+                paid_amount: s.paid_amount || 0,
+                status: s.status || 'unpaid',
+                isPaid: s.status === 'paid' || s.is_paid
+              };
+            });
           }
         }
         setBillSharesMap(sharesMap);
