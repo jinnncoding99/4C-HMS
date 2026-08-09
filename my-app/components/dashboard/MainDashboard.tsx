@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Loader2, History, Plane, ChevronRight, Sun, Moon, MoreHorizontal, FileText, Receipt } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
-import { BillSummary } from "../billing/BillSummary";
+import {BillSummary}  from "../billing/BillSummary";
 import ExpenseSummary from "../expense/ExpenseSummary"; 
 import ExpenseForm from "../expense/ExpenseForm";
 import RoleListenerModal from "@/components/RoleListenerModal";
@@ -27,6 +27,11 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const [profilesList, setProfilesList] = useState<any[]>([]);
   const [bills, setBills] = useState<any[]>([]);
   const [billSharesMap, setBillSharesMap] = useState<Record<string, any[]>>({});
+  
+  // Added states for Expenses and Expense Shares
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenseSharesMap, setExpenseSharesMap] = useState<Record<string, any[]>>({});
+
   const [userPaymentRequests, setUserPaymentRequests] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   
@@ -72,11 +77,30 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         setBillSharesMap(sharesMap);
       }
 
+      // Fetch Expenses and Expense Shares data
+      const { data: expensesData } = await supabase.from("expenses").select("*").order("created_at", { ascending: false });
+      if (expensesData) {
+        setExpenses(expensesData);
+
+        const expSharesMap: Record<string, any[]> = {};
+        for (const expense of expensesData) {
+          const { data: sharesData } = await supabase
+            .from("expense_shares")
+            .select("*")
+            .eq("expense_id", expense.id);
+          
+          if (sharesData) {
+            expSharesMap[expense.id] = sharesData;
+          }
+        }
+        setExpenseSharesMap(expSharesMap);
+      }
+
       const { data: reqsData } = await supabase.from("payment_requests").select("*");
       if (reqsData) setUserPaymentRequests(reqsData);
 
     } catch (error) {
-      console.error("Error fetching billing data:", error);
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -121,6 +145,16 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
       await fetchData();
     } catch (err) {
       console.error("Error deleting bill:", err);
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    try {
+      const { error } = await supabase.from("expenses").delete().eq("id", expenseId);
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      console.error("Error deleting expense:", err);
     }
   };
 
@@ -252,7 +286,18 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
             <TabsContent value="expenses" className="space-y-6 focus-visible:outline-none">
               <div className="w-full">
-                <ExpenseSummary userId={activeUserId} />
+                <ExpenseSummary 
+                  userRole={userRole}
+                  currentUserId={activeUserId}
+                  userId={activeUserId}
+                  profiles={profilesList}
+                  expenses={expenses}
+                  expenseSharesMap={expenseSharesMap}
+                  userPaymentRequests={userPaymentRequests}
+                  isMounted={isMounted}
+                  fetchData={fetchData}
+                  deleteExpense={handleDeleteExpense}
+                />
               </div>
             </TabsContent>
           </Tabs>

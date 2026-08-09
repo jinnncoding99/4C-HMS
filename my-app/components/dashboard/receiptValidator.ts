@@ -1,3 +1,4 @@
+// components/dashboard/receiptValidator.ts
 import { createWorker } from 'tesseract.js';
 
 interface ValidationOptions {
@@ -60,14 +61,18 @@ export async function validateReceiptImage(
     }
 
     return {
-      isValid: errors.length === 0 && errors.length === 0,
+      isValid: errors.length === 0,
       extractedText: text,
       confidence,
       errors
     };
 
   } catch (error) {
-    await worker.terminate();
+    try {
+      await worker.terminate();
+    } catch {
+      // Ignore termination error if worker failed to initialize
+    }
     console.error("Tesseract OCR Error:", error);
     return {
       isValid: false,

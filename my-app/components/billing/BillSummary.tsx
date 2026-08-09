@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { FileText, Clock, Wallet, CheckCircle2 } from 'lucide-react';
 
 import { UnifiedDashboardCard } from '@/components/dashboard/UnifiedDashboardCard';
-import { AddBillDialog, EditBillModal, ReceiverSettleModal } from './BillModals';
+import { AddBillDialog, EditBillModal } from './BillModals';
 import PaymentModal from '@/components/dashboard/PaymentModal';
 
 export const BillSummary = ({
@@ -35,66 +35,70 @@ export const BillSummary = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedBills, setExpandedBills] = useState<Record<string, boolean>>({});
-  
+
+  // Payment Modal States
   const [selectedBillForPay, setSelectedBillForPay] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [isDirectSettlement, setIsDirectSettlement] = useState<boolean>(false);
 
   const [editingBill, setEditingBill] = useState<any>(null);
-  const [settlingBill, setSettlingBill] = useState<any>(null);
-  const [settleMethod, setSettleMethod] = useState<'cash' | 'online'>('cash');
-  const [settleReceiptFile, setSettleReceiptFile] = useState<File | null>(null);
-  const [settlingSubmitting, setSettlingSubmitting] = useState(false);
 
   const isAdmin = userRole?.toLowerCase() === 'admin';
   const activeUserId = currentUserId || userId || (profiles.length > 0 ? profiles[0]?.id : null);
   const currentProfile = profiles.find((p: any) => p.id === activeUserId);
   const isDanz = currentProfile?.username?.toLowerCase() === 'danz';
-  const receiverProfile = profiles.find((p: any) => p.id === selectedBillForPay?.payment_receiver_id);
+  
+  // Find receiver profile for the selected bill (with admin fallback)
+  const receiverProfile = profiles.find((p: any) => p.id === selectedBillForPay?.payment_receiver_id) ||
+                        profiles.find((p: any) => p.role?.toLowerCase() === 'admin') ||
+                        null;
 
   const toggleExpand = (id: string) => {
     setExpandedBills((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Standard member share payment flow (Requires approval)
   const handleOpenPayModal = (bill: any, amount: number) => {
     setSelectedBillForPay(bill);
     setPaymentAmount(amount);
+    setIsDirectSettlement(false);
   };
 
-  const handleReceiverSettleSubmit = async () => {
-    setSettlingSubmitting(true);
-    setTimeout(() => {
-      setSettlingSubmitting(false);
-      setSettlingBill(null);
-      if (fetchData) fetchData();
-    }, 500);
+  // Direct settlement bill flow (Bypasses approval, instant clearance)
+  const handleOpenSettleModal = (bill: any, amount: number) => {
+    setSelectedBillForPay(bill);
+    setPaymentAmount(amount);
+    setIsDirectSettlement(true);
   };
 
-  const displayBills = (bills || []).filter((bill: any) => {
+  const hasBills = Array.isArray(bills) && bills.length > 0;
+
+  const displayBills = (!hasBills ? [] : bills).filter((bill: any) => {
     const breakdown = billSharesMap[bill.id] || [];
     const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
     const isBillPaid = bill.is_paid || bill.status === 'paid' || allSharesPaid;
     return !isBillPaid;
   });
 
-  // Calculate metrics for Top Summary Cards
+  // If there are no active display bills, reset collections and metrics to 0
+  const hasActiveBills = displayBills.length > 0;
+
   const activeBillsCount = displayBills.length;
 
-  const totalPendingCollection = (bills || []).reduce((acc, bill) => {
+  const totalPendingCollection = !hasActiveBills ? 0 : displayBills.reduce((acc, bill) => {
     const breakdown = billSharesMap[bill.id] || [];
-    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
-    if (bill.is_paid || bill.status === 'paid' || allSharesPaid) return acc;
     const totalAmount = Number(bill.total_amount || bill.amount || 0);
     const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
     return acc + Math.max(0, totalAmount - collected);
   }, 0);
 
-  const totalCollected = (bills || []).reduce((acc, bill) => {
+  const totalCollected = !hasActiveBills ? 0 : bills.reduce((acc, bill) => {
     const breakdown = billSharesMap[bill.id] || [];
     const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
     return acc + collected;
   }, 0);
 
-  const totalDue = (bills || []).reduce((acc: number, bill: any) => {
+  const totalDue = !hasActiveBills ? 0 : bills.reduce((acc: number, bill: any) => {
     const breakdown = billSharesMap[bill.id] || [];
     const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
     if (bill.is_paid || bill.status === 'paid' || allSharesPaid) return acc;
@@ -185,28 +189,42 @@ export const BillSummary = ({
                 <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">All shared monthly bills have been completely settled.</p>
               </div>
             ) : (
-              displayBills.map((bill: any) => (
-                <UnifiedDashboardCard
-                  key={bill.id}
-                  item={bill}
-                  breakdown={billSharesMap[bill.id] || []}
-                  activeUserId={activeUserId}
-                  isAdmin={isAdmin}
-                  isDanz={isDanz}
-                  isExpanded={!!expandedBills[bill.id]}
-                  onToggleExpand={toggleExpand}
-                  onPayNow={(b, amt) => handleOpenPayModal(b, amt)}
-                  onSettleItem={(b) => {
-                    setSettlingBill(b);
-                    setSettleMethod('cash');
-                    setSettleReceiptFile(null);
-                  }}
-                  onEditItem={(b) => setEditingBill(b)}
-                  onDeleteItem={deleteBill}
-                  userPaymentRequests={userPaymentRequests}
-                  type="bill"
-                />
-              ))
+              displayBills.map((bill: any) => {
+                const rawBreakdown = billSharesMap[bill.id] || [];
+                const formattedBreakdown = rawBreakdown.map((b: any) => {
+                  const targetUserId = b.boarder_id || b.user_id || b.id;
+                  const matchedProfile = profiles.find((p: any) => p.id === targetUserId);
+                  return {
+                    ...b,
+                    shareDue: b.shareDue ?? b.shared_amount ?? 0,
+                    isPaid: b.isPaid ?? b.is_paid ?? (b.status === 'paid'),
+                    username: b.username || matchedProfile?.username || 'Unknown Member',
+                    name: b.name || matchedProfile?.username || 'Unknown Member',
+                  };
+                });
+
+                return (
+                  <UnifiedDashboardCard
+                    key={bill.id}
+                    item={bill}
+                    breakdown={formattedBreakdown}
+                    activeUserId={activeUserId}
+                    isAdmin={isAdmin}
+                    isDanz={isDanz}
+                    isExpanded={!!expandedBills[bill.id]}
+                    onToggleExpand={toggleExpand}
+                    onPayNow={(b, amt) => handleOpenPayModal(b, amt)}
+                    onSettleItem={(b) => {
+                      const myShare = formattedBreakdown.find((item: any) => item.boarder_id === activeUserId || item.id === activeUserId);
+                      handleOpenSettleModal(b, Number(myShare?.shareDue || b.amount || 0));
+                    }}
+                    onEditItem={(b) => setEditingBill(b)}
+                    onDeleteItem={deleteBill}
+                    userPaymentRequests={userPaymentRequests}
+                    type="bill"
+                  />
+                );
+              })
             )}
           </div>
 
@@ -217,11 +235,13 @@ export const BillSummary = ({
         </div>
       </Card>
 
+      {/* Re-integrated Payment Modal with isDirectSettlement mode */}
       {selectedBillForPay && (
         <PaymentModal
           bill={selectedBillForPay}
           shareDue={paymentAmount}
           receiverProfile={receiverProfile || null}
+          isDirectSettlement={isDirectSettlement}
           onClose={() => setSelectedBillForPay(null)}
           onSuccess={() => {
             setSelectedBillForPay(null);
@@ -234,16 +254,6 @@ export const BillSummary = ({
         editingBill={editingBill}
         onClose={() => setEditingBill(null)}
         onSuccess={fetchData}
-      />
-
-      <ReceiverSettleModal
-        settlingBill={settlingBill}
-        settleMethod={settleMethod}
-        setSettleMethod={setSettleMethod}
-        setSettleReceiptFile={setSettleReceiptFile}
-        settlingSubmitting={settlingSubmitting}
-        onClose={() => setSettlingBill(null)}
-        onSubmit={handleReceiverSettleSubmit}
       />
     </div>
   );

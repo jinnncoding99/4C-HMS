@@ -1,3 +1,4 @@
+// components/expense/ExpenseForm.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -8,12 +9,15 @@ import { useRouter } from "next/navigation";
 
 interface ExpenseItem {
   id?: string;
-  description: string;
-  total_amount: number;
+  description?: string;
+  title?: string;
+  total_amount?: number;
+  amount?: number;
+  expense_date?: string | null;
+  date?: string | null;
   category?: string;
   payment_receiver_id?: string | null;
-  receipt_url?: string | null;
-  expense_date?: string | null;
+  payment_receiver?: string | null;
 }
 
 interface Profile {
@@ -24,50 +28,81 @@ interface Profile {
 
 interface ExpenseFormProps {
   initialData?: ExpenseItem;
+  profiles?: Profile[];
+  currentUserId?: string;
+  currentReceiverName?: string;
   onSuccess: () => void;
   onCancel?: () => void;
 }
 
-export default function ExpenseForm({ initialData, onSuccess, onCancel }: ExpenseFormProps) {
+export default function ExpenseForm({ 
+  initialData, 
+  profiles: propProfiles, 
+  currentUserId, 
+  currentReceiverName, 
+  onSuccess, 
+  onCancel 
+}: ExpenseFormProps) {
   const isEditing = !!initialData?.id;
   const router = useRouter();
   
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>(propProfiles || []);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [shareMode, setShareMode] = useState<"all" | "custom">("all");
   const [loading, setLoading] = useState(false);
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
+  const [authUserId, setAuthUserId] = useState<string | null>(currentUserId || null);
+  const [authUserName, setAuthUserName] = useState<string | null>(currentReceiverName || null);
+  
+  const initialDateVal = initialData?.expense_date || initialData?.date || "";
+  const initialAmountVal = initialData?.total_amount ?? initialData?.amount ?? "";
+
   const [formData, setFormData] = useState({
-    description: initialData?.description || "",
-    amount: initialData?.total_amount ? initialData.total_amount.toString() : "",
-    category: initialData?.category || "General",
-    expenseDate: initialData?.expense_date || new Date().toISOString().split('T')[0],
+    description: initialData?.description || initialData?.title || "",
+    expenseDate: initialDateVal ? initialDateVal.split('T')[0] : "",
+    amount: initialAmountVal !== "" ? String(initialAmountVal) : "",
+    receiverId: initialData?.payment_receiver_id || "",
+    category: initialData?.category || "Food",
   });
 
   const supabase = createClient();
-  const inputStyles = "w-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white rounded-md p-2 text-sm focus:border-[#4B49AC] dark:focus:border-[#ff8c00] focus:ring-1 focus:ring-[#4B49AC] dark:focus:ring-[#ff8c00] outline-none transition-all";
+  const inputStyles = "w-full bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white rounded-md p-2 text-sm focus:border-[#4B49AC] dark:focus:border-[#ff8c00] focus:ring-1 focus:ring-[#4B49AC] dark:focus:ring-[#ff8c00] outline-none transition-all";
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
+      if (!authUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setAuthUserId(user.id);
+          const { data: userProfile } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", user.id)
+            .single();
+          
+          if (userProfile) {
+            setAuthUserName(userProfile.username);
+          }
+        }
       }
 
-      const { data: profileData } = await supabase.from("profiles").select("id, email, username");
-      if (profileData) {
+      let profileData = propProfiles;
+      if (!profileData || profileData.length === 0) {
+        const { data } = await supabase.from("profiles").select("id, email, username");
+        if (data) profileData = data;
+      }
+
+      if (profileData && profileData.length > 0) {
         setProfiles(profileData);
 
         if (isEditing && initialData?.id) {
           const { data: existingShares } = await supabase
             .from("expense_shares")
-            .select("user_id")
+            .select("boarder_id")
             .eq("expense_id", initialData.id);
 
           if (existingShares && existingShares.length > 0) {
-            const memberIds = existingShares.map(s => s.user_id);
+            const memberIds = existingShares.map(s => s.boarder_id);
             setSelectedMembers(memberIds);
             if (memberIds.length === profileData.length) {
               setShareMode("all");
@@ -85,7 +120,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
       }
     };
     fetchData();
-  }, [supabase, initialData, isEditing]);
+  }, [supabase, initialData, isEditing, propProfiles, authUserId]);
 
   const handleShareModeChange = (mode: "all" | "custom") => {
     setShareMode(mode);
@@ -112,48 +147,35 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
     setLoading(true);
 
     try {
-      let receiptUrl = initialData?.receipt_url || null;
-
-      if (receiptFile) {
-        const fileExt = receiptFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('receipts')
-          .upload(filePath, receiptFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage
-          .from('receipts')
-          .getPublicUrl(filePath);
-
-        receiptUrl = publicUrlData.publicUrl;
-      }
-
       const totalAmountNum = parseFloat(formData.amount) || 0;
       const membersCount = selectedMembers.length;
+
+      let memberShares: any[] = [];
       const splitAmount = totalAmountNum / membersCount;
 
-      let memberShares: { user_id: string; shared_amount: number }[] = [];
       selectedMembers.forEach(id => {
-        memberShares.push({
+        memberShares.push({ 
+          boarder_id: id, 
           user_id: id,
-          shared_amount: parseFloat(splitAmount.toFixed(2)),
+          shared_amount: parseFloat(splitAmount.toFixed(2)), 
+          shareDue: parseFloat(splitAmount.toFixed(2)),
+          status: 'unpaid',
+          is_paid: false
         });
       });
 
       let expenseId = initialData?.id;
-      const receiverId = initialData?.payment_receiver_id || currentUserId;
+
+      const activeReceiverId = isEditing ? formData.receiverId : (authUserId || formData.receiverId || null);
+      const activeReceiverName = authUserName || profiles.find(p => p.id === activeReceiverId)?.username || null;
 
       const expensePayload = {
         description: formData.description,
+        expense_date: formData.expenseDate ? formData.expenseDate : null,
         total_amount: totalAmountNum,
         category: formData.category,
-        payment_receiver_id: receiverId,
-        receipt_url: receiptUrl,
-        expense_date: formData.expenseDate,
+        payment_receiver_id: activeReceiverId,
+        payment_receiver: activeReceiverName,
       };
 
       if (isEditing && expenseId) {
@@ -170,7 +192,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
           .eq("expense_id", expenseId);
 
         for (const newShare of memberShares) {
-          const existing = existingShares?.find(s => s.user_id === newShare.user_id);
+          const existing = existingShares?.find(s => s.boarder_id === newShare.boarder_id);
           if (existing) {
             await supabase
               .from("expense_shares")
@@ -178,13 +200,13 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
                 shared_amount: newShare.shared_amount,
               })
               .eq("expense_id", expenseId)
-              .eq("user_id", newShare.user_id);
+              .eq("boarder_id", newShare.boarder_id);
           } else {
             await supabase
               .from("expense_shares")
               .insert([{
                 expense_id: expenseId,
-                user_id: newShare.user_id,
+                boarder_id: newShare.boarder_id,
                 shared_amount: newShare.shared_amount,
                 status: 'unpaid',
                 is_paid: false
@@ -192,14 +214,14 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
           }
         }
 
-        const activeUserIds = memberShares.map(s => s.user_id);
-        const sharesToRemove = existingShares?.filter(s => !activeUserIds.includes(s.user_id)) || [];
+        const activeBoarderIds = memberShares.map(s => s.boarder_id);
+        const sharesToRemove = existingShares?.filter(s => !activeBoarderIds.includes(s.boarder_id)) || [];
         for (const oldShare of sharesToRemove) {
           await supabase
             .from("expense_shares")
             .delete()
             .eq("expense_id", expenseId)
-            .eq("user_id", oldShare.user_id);
+            .eq("boarder_id", oldShare.boarder_id);
         }
 
       } else {
@@ -214,7 +236,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
 
         const expenseSharesPayload = memberShares.map(share => ({
           expense_id: expenseId,
-          user_id: share.user_id,
+          boarder_id: share.boarder_id,
           shared_amount: share.shared_amount,
           status: 'unpaid',
           is_paid: false
@@ -231,16 +253,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
       router.refresh();
       onSuccess();
     } catch (err: unknown) {
-      let errorMessage = "Unknown error occurred";
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'object' && err !== null) {
-        errorMessage = (err as Record<string, any>).message || (err as Record<string, any>).error_description || JSON.stringify(err);
-      } else {
-        errorMessage = String(err);
-      }
-
+      const errorMessage = err instanceof Error ? err.message : String(err);
       console.error("Error saving expense:", errorMessage);
       alert("Failed to save expense: " + errorMessage);
     } finally {
@@ -260,20 +273,9 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
         <Input 
           value={formData.description} 
           onChange={e => setFormData({...formData, description: e.target.value})} 
-          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
-          placeholder="e.g. Groceries - Weekly Run"
+          className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
+          placeholder="e.g. Grocery Run - Weekly"
           required
-        />
-      </div>
-
-      <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Expense Date</label>
-        <Input 
-          type="date" 
-          value={formData.expenseDate || ""} 
-          onChange={e => setFormData({...formData, expenseDate: e.target.value})} 
-          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
-          required 
         />
       </div>
 
@@ -284,11 +286,22 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
           onChange={(e) => setFormData({...formData, category: e.target.value})}
           className={inputStyles}
         >
-          <option value="General" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">General</option>
-          <option value="Groceries" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Groceries</option>
-          <option value="Utilities" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Utilities</option>
-          <option value="Supplies" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Supplies</option>
+          <option value="Food" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Food & Groceries</option>
+          <option value="Supplies" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Household Supplies</option>
+          <option value="Transport" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Transportation</option>
+          <option value="Misc" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Miscellaneous</option>
         </select>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Expense Date</label>
+        <Input 
+          type="date" 
+          value={formData.expenseDate} 
+          onChange={e => setFormData({...formData, expenseDate: e.target.value})} 
+          className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white" 
+          required 
+        />
       </div>
 
       <div>
@@ -336,33 +349,23 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Total Amount (₱)</label>
-          <Input type="number" step="0.01" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white" placeholder="0.00" required />
+          <Input type="number" step="0.01" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white" placeholder="0.00" required />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-gray-300">Sharing Members Count</label>
-          <Input type="number" value={membersCount} className="bg-slate-100 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white opacity-80 cursor-not-allowed" readOnly disabled />
+          <Input type="number" value={membersCount} className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white opacity-80 cursor-not-allowed" readOnly disabled />
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Receipt (Optional)</label>
-        <Input 
-          type="file" 
-          accept="image/*,application/pdf"
-          onChange={e => setReceiptFile(e.target.files?.[0] || null)}
-          className="bg-slate-50 dark:bg-[#111111] border-slate-200 dark:border-[#333333] text-slate-900 dark:text-white text-xs file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#4B49AC] dark:file:bg-[#ff8c00] file:text-white dark:file:text-black hover:file:bg-[#3f3de9] dark:hover:file:bg-[#e67e00] cursor-pointer"
-        />
-      </div>
-
       <div className="bg-slate-100 dark:bg-[#111] p-3 rounded-lg border border-slate-200 dark:border-[#333] text-xs text-slate-600 dark:text-gray-400">
-        Estimated Split Share per person: <span className="text-[#4B49AC] dark:text-[#ff8c00] font-bold">₱{estimatedShare}</span>
+        Estimated Base Share Due per person: <span className="text-[#4B49AC] dark:text-[#ff8c00] font-bold">₱{estimatedShare}</span>
       </div>
 
       <div className="flex gap-3 pt-2">
         <Button 
           type="submit" 
           disabled={loading}
-          className="flex-1 bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer"
+          className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer"
         >
           {loading ? "Saving..." : isEditing ? "Save Changes" : "Submit Expense"}
         </Button>
@@ -371,7 +374,7 @@ export default function ExpenseForm({ initialData, onSuccess, onCancel }: Expens
             type="button" 
             variant="ghost" 
             onClick={onCancel}
-            className="text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+            className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
             Cancel
           </Button>

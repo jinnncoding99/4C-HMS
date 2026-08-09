@@ -1,52 +1,98 @@
-'use client';
+// components/expense/ExpenseBreakdown.tsx
+import React from 'react';
 
-interface ExpenseShare {
+interface MemberShare {
   id: string;
-  username: string;
-  role: string;
-  shareDue: number;
-  isPaid?: boolean;
-  status?: string;
+  boarder_id?: string;
+  username?: string;
+  daysPresent?: number;
+  days_present?: number;
+  shareDue?: number;
+  shared_amount?: number;
+  paidAmount?: number;
   paid_amount?: number;
+  status?: string;
+  isPaid?: boolean;
+  is_paid?: boolean;
 }
 
 interface ExpenseBreakdownProps {
-  breakdown: ExpenseShare[];
-  receiverId?: string;
+  breakdown: MemberShare[];
+  totalDays?: number;
+  paymentReceiverId?: string | null;
+  totalExpenseAmount?: number;
 }
 
-export default function ExpenseBreakdown({ breakdown, receiverId }: ExpenseBreakdownProps) {
+export const ExpenseBreakdown = ({
+  breakdown,
+  totalDays = 30,
+  paymentReceiverId,
+  totalExpenseAmount = 0,
+}: ExpenseBreakdownProps) => {
+  const normalizedBreakdown = (breakdown || []).map((b) => ({
+    ...b,
+    id: b.id || b.boarder_id || '',
+    username: b.username || 'Member',
+    daysPresent: Number(b.daysPresent ?? b.days_present ?? 0),
+    shareDue: Number(b.shareDue ?? b.shared_amount ?? 0),
+    paidAmount: Number(b.paidAmount ?? b.paid_amount ?? 0),
+    isPaid: Boolean(b.isPaid ?? b.is_paid ?? b.status === 'paid'),
+  }));
+
+  const nonReceiverShares = normalizedBreakdown.filter((b) => b.id !== paymentReceiverId);
+  const allOthersPaid = nonReceiverShares.length > 0 && nonReceiverShares.every((b) => b.isPaid || b.status === 'paid');
+  const totalCollectedFromOthers = nonReceiverShares.reduce((sum, b) => sum + b.paidAmount, 0);
+
   return (
-    <div className="mt-3 p-3.5 bg-slate-50 dark:bg-zinc-950/70 rounded-lg border border-slate-200 dark:border-zinc-800/80 space-y-2">
-      <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
-        Participant Share Status & Deductions
+    <div className="mt-3 p-3 bg-slate-100 dark:bg-[#181818] rounded-md border border-slate-200 dark:border-[#333] space-y-2 transition-colors">
+      <p className="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+        Member Share Breakdown ({normalizedBreakdown.length} Participants)
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {breakdown.map((member) => {
-          const remainingDue = Math.max(0, Number(member.shareDue) - Number(member.paid_amount || 0));
-          const isReceiverMember = member.id === receiverId;
-          const isPaidStatus = member.status === 'paid' || member.isPaid || remainingDue === 0;
+        {normalizedBreakdown.map((member) => {
+          const isReceiver = member.id === paymentReceiverId;
+          const isPaid = member.status === 'paid' || member.isPaid;
+
+          // Calculate display amount: Receiver's amount accumulates collected funds, others decrease as they pay
+          let displayAmount = 0;
+          if (isReceiver) {
+            const receiverBase = member.shareDue;
+            displayAmount = receiverBase + totalCollectedFromOthers;
+          } else {
+            displayAmount = Math.max(0, member.shareDue - member.paidAmount);
+          }
 
           return (
-            <div key={member.id} className="flex justify-between items-center bg-white dark:bg-zinc-900 p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs shadow-xs">
+            <div
+              key={member.id}
+              className="flex justify-between items-center bg-white dark:bg-[#111] p-2 rounded border border-slate-200 dark:border-[#222] text-xs transition-colors"
+            >
               <div>
-                <span className="font-medium text-slate-800 dark:text-zinc-200 block">
-                  {member.username} {isReceiverMember ? <span className="text-[#4B49AC] dark:text-amber-500 text-[10px] ml-1">(Receiver)</span> : ""}
-                </span>
-                {Number(member.paid_amount || 0) > 0 && (
-                  <span className="text-[10px] text-slate-500 dark:text-zinc-400 block mt-0.5">Paid: ₱{Number(member.paid_amount).toFixed(2)}</span>
-                )}
+                <p className="font-semibold text-slate-900 dark:text-white">
+                  {member.username} {isReceiver ? "(Receiver)" : ""}
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-400">
+                  Present in House: {member.daysPresent} / {totalDays} days
+                </p>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[#4B49AC] dark:text-amber-400 block">
-                  ₱{isPaidStatus ? '0.00' : remainingDue.toFixed(2)}
-                </span>
-                <span className={`text-[10px] font-semibold uppercase tracking-tight block mt-0.5 ${
-                  isPaidStatus ? 'text-emerald-600 dark:text-emerald-400' :
-                  member.status === 'pending_approval' ? 'text-[#4B49AC] dark:text-amber-400' :
-                  'text-slate-400 dark:text-zinc-500'
-                }`}>
-                  {isPaidStatus ? 'paid' : (member.status || 'unpaid')}
+                <p className="font-bold text-[#4B49AC] dark:text-[#ff8c00]">
+                  {isPaid && (!isReceiver || allOthersPaid) ? (
+                    '₱0.00'
+                  ) : (
+                    `₱${displayAmount.toFixed(2)}`
+                  )}
+                </p>
+                <span
+                  className={`text-[10px] font-semibold uppercase block ${
+                    isPaid
+                      ? 'text-emerald-600 dark:text-green-500'
+                      : member.status === 'pending_approval'
+                      ? 'text-amber-600 dark:text-yellow-500'
+                      : 'text-slate-500 dark:text-gray-400'
+                  }`}
+                >
+                  {member.isPaid ? 'paid' : member.status || 'unpaid'}
                 </span>
               </div>
             </div>
@@ -55,4 +101,4 @@ export default function ExpenseBreakdown({ breakdown, receiverId }: ExpenseBreak
       </div>
     </div>
   );
-}
+};

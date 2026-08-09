@@ -1,3 +1,4 @@
+// components/dashboard/HistoryTab.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -17,8 +18,9 @@ interface TransactionHistoryItem {
   settled_at?: string;
   payment_receiver?: string | null;
   payment_receiver_id?: string | null;
+  payer_id?: string | null;
   url_receipt?: string | null;
-  source_type: 'bill' | 'expense';
+  source_type: 'bill' | 'expense' | 'standard_payment';
 }
 
 interface HistoryTabProps {
@@ -37,8 +39,8 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
-  // Filter States
-  const [filterType, setFilterType] = useState<'all' | 'bill' | 'expense'>('all');
+  // Filter States - Added 'standard_payment' option
+  const [filterType, setFilterType] = useState<'all' | 'bill' | 'expense' | 'standard_payment'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -55,58 +57,63 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
   const supabase = createClient();
 
   useEffect(() => {
-    fetchHistoryData();
-    fetchCurrentUser();
+    fetchCurrentUserAndHistory();
   }, []);
 
-  const fetchCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
-      setCurrentUserEmail(user.email || null);
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0];
-      setCurrentUserName(fullName);
-    }
-  };
-
-  const fetchHistoryData = async () => {
+  const fetchCurrentUserAndHistory = async () => {
     setLoading(true);
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let userId: string | null = null;
+      let userEmail: string | null = null;
+      let userName: string | null = null;
+
+      if (user) {
+        userId = user.id;
+        userEmail = user.email || null;
+        userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || null;
+        setCurrentUserId(userId);
+        setCurrentUserEmail(userEmail);
+        setCurrentUserName(userName);
+      }
+
+      // Fetch transaction_history (Bills & Settled Transactions)
       const { data: txData, error: txError } = await supabase
         .from("transaction_history")
         .select("*");
       
       if (txError) throw txError;
 
-      const { data: expenseData, error: expenseError } = await supabase
-        .from("expenses") 
+      // Fetch standard payments table
+      const { data: paymentData, error: paymentError } = await supabase
+        .from("standard_payments") 
         .select("*");
 
-      if (expenseError) {
-        console.warn("Could not fetch from expenses table:", expenseError.message);
+      if (paymentError) {
+        console.warn("Could not fetch from standard_payments table:", paymentError.message);
       }
 
       const formattedBills: TransactionHistoryItem[] = (txData || []).map((item) => ({
         ...item,
-        source_type: 'bill' as const,
+        source_type: item.source_type || 'bill',
       }));
 
-      const formattedExpenses: TransactionHistoryItem[] = (expenseData || []).map((item) => ({
+      const formattedPayments: TransactionHistoryItem[] = (paymentData || []).map((item) => ({
         id: item.id,
-        description: item.description || item.title || 'Expense Item',
+        description: item.description || item.title || 'Standard Payment',
         total_amount: Number(item.amount || item.total_amount || 0),
-        settled_at: item.settled_at || item.created_at || item.date,
+        settled_at: item.settled_at || item.approved_at || item.created_at || item.date,
         billing_period_start: item.billing_period_start || null,
         billing_period_end: item.billing_period_end || null,
-        payment_receiver: item.payment_receiver || item.paid_to || 'N/A',
-        payment_receiver_id: item.payment_receiver_id || null,
+        payment_receiver: item.payment_receiver || item.receiver_name || item.paid_to || 'N/A',
+        payment_receiver_id: item.payment_receiver_id || item.receiver_id || null,
+        payer_id: item.payer_id || item.approved_by_id || null,
         url_receipt: item.url_receipt || item.receipt_url || null,
-        calculation_type: item.calculation_type || 'expense',
-        source_type: 'expense' as const,
+        calculation_type: item.calculation_type || 'standard_payment',
+        source_type: 'standard_payment' as const,
       }));
 
-      const combined = [...formattedBills, ...formattedExpenses].sort((a, b) => {
+      const combined = [...formattedBills, ...formattedPayments].sort((a, b) => {
         const dateA = new Date(a.settled_at || 0).getTime();
         const dateB = new Date(b.settled_at || 0).getTime();
         return dateB - dateA;
@@ -128,10 +135,48 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
     return itemDate >= start && itemDate <= end;
   };
 
+  const canViewTransaction = (tx: TransactionHistoryItem) => {
+    if (!currentUserId && !currentUserEmail) return true;
+
+    const hasReceiverField = tx.payment_receiver_id || tx.payment_receiver;
+    const hasPayerField = tx.payer_id;
+
+    if (!hasReceiverField && !hasPayerField) return true;
+
+    let matchesReceiver = false;
+    if (tx.payment_receiver_id && currentUserId && tx.payment_receiver_id.trim() === currentUserId.trim()) {
+      matchesReceiver = true;
+    } else if (tx.payment_receiver) {
+      const cleanReceiver = tx.payment_receiver.trim().toLowerCase();
+      if (currentUserEmail && cleanReceiver === currentUserEmail.trim().toLowerCase()) matchesReceiver = true;
+      else if (currentUserName && cleanReceiver === currentUserName.trim().toLowerCase()) matchesReceiver = true;
+      else if (currentUserEmail && cleanReceiver.includes(currentUserEmail.split('@')[0].toLowerCase())) matchesReceiver = true;
+      else if (currentUserName && cleanReceiver.includes(currentUserName.toLowerCase())) matchesReceiver = true;
+    }
+
+    let matchesPayer = false;
+    if (tx.payer_id && currentUserId && tx.payer_id.trim() === currentUserId.trim()) {
+      matchesPayer = true;
+    }
+
+    if (hasReceiverField && hasPayerField) {
+      return matchesReceiver || matchesPayer;
+    }
+    if (hasReceiverField) {
+      return matchesReceiver;
+    }
+    if (hasPayerField) {
+      return matchesPayer;
+    }
+
+    return true;
+  };
+
   const filteredTransactions = transactionHistory.filter(tx => {
+    const matchesPrivacy = canViewTransaction(tx);
     const matchesType = filterType === 'all' || tx.source_type === filterType;
     const matchesDate = filterByDate(tx.settled_at || tx.billing_period_start);
-    return matchesType && matchesDate;
+    return matchesPrivacy && matchesType && matchesDate;
   });
 
   const handleGenerateReport = () => {
@@ -202,7 +247,9 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
         .getPublicUrl(filePath);
       const newUrl = publicURLData.publicUrl;
 
-      const targetTable = selectedTx.source_type === 'expense' ? 'expenses' : 'transaction_history';
+      let targetTable = 'transaction_history';
+      if (selectedTx.source_type === 'expense') targetTable = 'expenses';
+      if (selectedTx.source_type === 'standard_payment') targetTable = 'standard_payments';
 
       const { error: updateError } = await supabase
         .from(targetTable)
@@ -217,7 +264,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
       
       const updatedTx = { ...selectedTx, url_receipt: newUrl };
       setSelectedTx(updatedTx);
-      await fetchHistoryData();
+      await fetchCurrentUserAndHistory();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       alert("Failed to process receipt content: " + errorMessage);
@@ -304,7 +351,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             </div>
             <div className="space-y-0.5">
               <h3 className="text-xl font-bold">Bill & Expense History</h3>
-              <p className="text-sm text-muted-foreground">Review all settled bills, expenses, and transaction logs.</p>
+              <p className="text-sm text-muted-foreground">Review fully approved and settled records, expenses, and transaction logs.</p>
             </div>
           </div>
           
@@ -316,7 +363,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
               <Download size={14} /> Generate Report
             </Button>
             <Button 
-              onClick={fetchHistoryData} 
+              onClick={fetchCurrentUserAndHistory} 
               className="bg-muted border border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer h-9"
             >
               Refresh Logs
@@ -327,7 +374,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
 
       {/* Filter Toolbar */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
-        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border w-full lg:w-auto justify-center">
+        <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border w-full lg:w-auto justify-center">
           <button
             onClick={() => setFilterType('all')}
             className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
@@ -351,6 +398,14 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             }`}
           >
             Expenses
+          </button>
+          <button
+            onClick={() => setFilterType('standard_payment')}
+            className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
+              filterType === 'standard_payment' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Other Transactions
           </button>
         </div>
 
@@ -404,9 +459,13 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-foreground text-sm">{tx.description}</p>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                      tx.source_type === 'expense' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                      tx.source_type === 'expense' 
+                        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' 
+                        : tx.source_type === 'standard_payment'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
                     }`}>
-                      {tx.source_type}
+                      {tx.source_type === 'standard_payment' ? 'Standard Payment' : tx.source_type}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
@@ -414,8 +473,8 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   </p>
                 </div>
                 <div className="text-left sm:text-right space-y-1 w-full sm:w-auto flex sm:block justify-between items-center">
-                  <span className="bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase inline-block">
-                    Recorded
+                  <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase inline-block">
+                    Approved & Settled
                   </span>
                   <p className="font-bold text-primary text-sm">₱{Number(tx.total_amount).toFixed(2)}</p>
                 </div>
@@ -423,7 +482,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-12 text-xs italic">No records found matching this filter or date range.</p>
+          <p className="text-center text-muted-foreground py-12 text-xs italic">No approved records found visible to you matching this filter or date range.</p>
         )}
       </div>
 
@@ -452,7 +511,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                 <div className="space-y-2.5 text-xs text-muted-foreground">
                   <div className="bg-muted p-3 rounded-lg border border-border space-y-1.5">
                     <p><span className="text-muted-foreground">Record ID:</span> {selectedTx.id}</p>
-                    <p><span className="text-muted-foreground">Type:</span> <span className="uppercase text-foreground font-medium">{selectedTx.source_type}</span></p>
+                    <p><span className="text-muted-foreground">Type:</span> <span className="uppercase text-foreground font-medium">{selectedTx.source_type.replace('_', ' ')}</span></p>
                     <p><span className="text-muted-foreground">Description:</span> <span className="text-foreground font-medium">{selectedTx.description}</span></p>
                     <p><span className="text-muted-foreground">Payment Receiver:</span> <span className="text-foreground font-medium">{selectedTx.payment_receiver || 'N/A'}</span></p>
                     <p><span className="text-muted-foreground">Total Amount:</span> <span className="text-primary font-bold">₱{Number(selectedTx.total_amount || 0).toFixed(2)}</span></p>

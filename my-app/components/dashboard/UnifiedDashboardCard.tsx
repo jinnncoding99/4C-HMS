@@ -4,13 +4,24 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Edit, Trash2, History, Clock } from 'lucide-react';
 
 interface MemberShare {
-  id: string;
-  username: string;
+  id?: string;
+  boarder_id?: string;
+  user_id?: string;
+  userId?: string;
+  username?: string;
+  name?: string;
+  boarder_name?: string;
+  user_name?: string;
   daysPresent?: number;
-  shareDue: number;
+  days_present?: number;
+  shareDue?: number;
+  shared_amount?: number;
+  amount?: number;
   paidAmount?: number;
+  paid_amount?: number;
   status?: string;
   isPaid?: boolean;
+  is_paid?: boolean;
 }
 
 interface UnifiedDashboardCardProps {
@@ -27,6 +38,7 @@ interface UnifiedDashboardCardProps {
   onDeleteItem: (id: string) => void;
   userPaymentRequests: any[];
   type?: 'bill' | 'expense';
+  profileMap?: Map<string, any> | Record<string, any>;
 }
 
 export const UnifiedDashboardCard = ({
@@ -43,18 +55,42 @@ export const UnifiedDashboardCard = ({
   onDeleteItem,
   userPaymentRequests,
   type = 'bill',
+  profileMap = new Map(),
 }: UnifiedDashboardCardProps) => {
   const [showTimeline, setShowTimeline] = useState(false);
 
+  // Helper to safely fetch username from profileMap (supports Map or plain object)
+  const resolveUsername = (userId: string, fallbackName?: string) => {
+    if (fallbackName && fallbackName !== 'Unknown Member') return fallbackName;
+    if (!userId) return 'Unknown Member';
+
+    if (profileMap instanceof Map) {
+      const profile = profileMap.get(userId);
+      return profile?.username || profile?.name || profile?.full_name || 'Unknown Member';
+    } else if (profileMap && typeof profileMap === 'object') {
+      const profile = profileMap[userId];
+      return profile?.username || profile?.name || profile?.full_name || 'Unknown Member';
+    }
+    return 'Unknown Member';
+  };
+
   // Normalize breakdown fields for consistency across bills and expenses
-  const normalizedBreakdown = (breakdown || []).map((b) => ({
-    ...b,
-    id: b.id || b.boarder_id || b.user_id,
-    shareDue: b.shareDue ?? b.shared_amount ?? b.amount ?? 0,
-    paidAmount: b.paidAmount ?? b.paid_amount ?? 0,
-    daysPresent: b.daysPresent ?? b.days_present ?? 0,
-    isPaid: b.isPaid ?? b.is_paid ?? (b.status === 'paid'),
-  }));
+  const normalizedBreakdown = (breakdown || []).map((b) => {
+    // Prioritize boarder_id first since the database schema uses boarder_id for expense_shares
+    const memberId = b.boarder_id || b.user_id || b.userId || b.id;
+    const rawName = b.username || b.name || b.boarder_name || b.user_name;
+    const resolvedName = resolveUsername(memberId || '', rawName);
+
+    return {
+      ...b,
+      id: memberId,
+      username: resolvedName,
+      shareDue: b.shareDue ?? b.shared_amount ?? b.amount ?? 0,
+      paidAmount: b.paidAmount ?? b.paid_amount ?? 0,
+      daysPresent: b.daysPresent ?? b.days_present ?? 0,
+      isPaid: b.isPaid ?? b.is_paid ?? (b.status === 'paid'),
+    };
+  });
 
   const validDays = normalizedBreakdown.map((b) => Number(b.daysPresent)).filter((d) => !isNaN(d) && d > 0);
   const totalDays = validDays.length > 0 ? Math.max(...validDays) : Number(item.total_members) > 0 ? 30 : 31;
@@ -307,12 +343,17 @@ export const UnifiedDashboardCard = ({
               }
 
               return (
-                <div key={member.id} className="flex justify-between items-center bg-white dark:bg-[#111] p-2 rounded border border-slate-200 dark:border-[#222] text-xs transition-colors">
+                <div key={member.id || Math.random()} className="flex justify-between items-center bg-white dark:bg-[#111] p-2 rounded border border-slate-200 dark:border-[#222] text-xs transition-colors">
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-white">
                       {member.username} {isReceiver ? "(Receiver/Payer)" : ""}
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-gray-400">Days Active: {member.daysPresent} / {totalDays} days</p>
+                    <p className="text-[10px] text-slate-500 dark:text-gray-400">
+                      {type === 'bill' 
+                        ? `Days Active: ${member.daysPresent} / ${totalDays} days`
+                        : `Split Share (${item.date || item.created_at?.split('T')[0] || 'One-time'})`
+                      }
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-[#4B49AC] dark:text-[#ff8c00]">

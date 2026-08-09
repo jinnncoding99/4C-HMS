@@ -1,189 +1,162 @@
 // components/expense/ExpenseModals.tsx
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { QrCode } from "lucide-react";
-import ExpenseForm from "./ExpenseForm";
+import React from 'react';
+import { Plus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import ExpenseForm from './ExpenseForm';
 
-export function SettleModal({
+interface AddExpenseDialogProps {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+export const AddExpenseDialog = ({ isOpen, setIsOpen, onSuccess }: AddExpenseDialogProps) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold transition-all shadow-sm rounded-full px-4 h-9">
+          <Plus className="h-4 w-4 mr-1.5" />
+          Add New Expense
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#ff8c00] text-slate-900 dark:text-white w-[95%] max-w-2xl max-h-[85vh] overflow-y-auto p-6 pb-12 rounded-2xl shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold">Post New Expense Entry</DialogTitle>
+        </DialogHeader>
+        <div className="mt-2 pb-6">
+          <ExpenseForm 
+            onSuccess={() => { 
+              setIsOpen(false); 
+              onSuccess(); 
+            }} 
+            onCancel={() => setIsOpen(false)} 
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface EditExpenseModalProps {
+  editingExpense: any;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export const EditExpenseModal = ({ editingExpense, onClose, onSuccess }: EditExpenseModalProps) => {
+  if (!editingExpense) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[9999]">
+      <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-slate-200 dark:border-[#ff8c00] w-full max-w-lg max-h-[85vh] overflow-y-auto space-y-4 text-slate-900 dark:text-white shadow-2xl pb-12">
+        <h3 className="text-lg font-bold">Edit Expense Entry</h3>
+        <div className="mt-2 pb-6">
+          <ExpenseForm 
+            initialData={editingExpense} 
+            onSuccess={() => { 
+              onClose(); 
+              onSuccess(); 
+            }} 
+            onCancel={onClose} 
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface ReceiverSettleExpenseModalProps {
+  settlingExpense: any;
+  settleMethod: 'cash' | 'online';
+  setSettleMethod: (method: 'cash' | 'online') => void;
+  setSettleReceiptFile: (file: File | null) => void;
+  settlingSubmitting: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+}
+
+export const ReceiverSettleExpenseModal = ({
   settlingExpense,
   settleMethod,
   setSettleMethod,
   setSettleReceiptFile,
   settlingSubmitting,
-  handleSettleExpenseAsReceiver,
   onClose,
-}: any) {
+  onSubmit,
+}: ReceiverSettleExpenseModalProps) => {
   if (!settlingExpense) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-      <div className="bg-white dark:bg-[#18181b] p-6 rounded-xl border border-slate-200 dark:border-zinc-800 w-full max-w-md space-y-4 text-slate-900 dark:text-zinc-100 shadow-2xl">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-zinc-800 pb-3">Settle Bill Payment</h3>
-        <p className="text-xs text-slate-500 dark:text-zinc-400">Choose how you handled the final payment for <span className="text-slate-900 dark:text-white font-semibold">{settlingExpense.description}</span>.</p>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Settlement Method</label>
+  return (
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[9999]">
+      <div className="bg-white dark:bg-[#1a1a1a] p-6 rounded-2xl border border-slate-200 dark:border-[#ff8c00] w-full max-w-md max-h-[85vh] overflow-y-auto space-y-4 text-slate-900 dark:text-white shadow-2xl pb-12">
+        <h3 className="text-lg font-bold">Settle Expense Manually</h3>
+        <p className="text-xs text-slate-500 dark:text-gray-400">
+          Marking expense: <span className="text-slate-900 dark:text-white font-semibold">{settlingExpense.description}</span>
+        </p>
+
+        <div className="space-y-2">
+          <label className="text-xs text-slate-700 dark:text-gray-300 font-medium">Settlement Method</label>
           <div className="flex gap-2">
             <Button 
               type="button" 
-              onClick={() => { setSettleMethod('cash'); setSettleReceiptFile(null); }} 
-              className={`flex-1 ${settleMethod === 'cash' ? 'bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold' : 'bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300'}`}
+              onClick={() => {
+                setSettleMethod('cash');
+                setSettleReceiptFile(null);
+              }} 
+              className={`flex-1 cursor-pointer transition-colors ${
+                settleMethod === 'cash' 
+                  ? 'bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold' 
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#222] dark:hover:bg-[#2a2a2a] text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-transparent'
+              }`}
             >
               Cash
             </Button>
             <Button 
               type="button" 
               onClick={() => setSettleMethod('online')} 
-              className={`flex-1 ${settleMethod === 'online' ? 'bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold' : 'bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300'}`}
+              className={`flex-1 cursor-pointer transition-colors ${
+                settleMethod === 'online' 
+                  ? 'bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold' 
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#222] dark:hover:bg-[#2a2a2a] text-slate-600 dark:text-gray-300 border border-slate-200 dark:border-transparent'
+              }`}
             >
-              Online (QR)
+              Online
             </Button>
           </div>
         </div>
 
         {settleMethod === 'online' && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Upload Receipt Proof <span className="text-[#4B49AC] dark:text-amber-400">*</span></label>
-            <Input 
+          <div className="space-y-2">
+            <label className="text-xs text-slate-700 dark:text-gray-300 font-medium">Upload Proof of Receipt (Optional)</label>
+            <input 
               type="file" 
-              accept="image/*" 
-              onChange={(e) => setSettleReceiptFile(e.target.files?.[0] || null)} 
-              className="bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-xs text-slate-900 dark:text-white" 
+              accept="image/*"
+              onChange={(e) => setSettleReceiptFile(e.target.files?.[0] || null)}
+              className="w-full text-xs text-slate-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#4B49AC] hover:file:bg-[#3f3dc9] dark:file:bg-[#ff8c00] dark:hover:file:bg-[#e67e00] file:text-white dark:file:text-black cursor-pointer bg-slate-50 dark:bg-[#111] p-2 rounded-md border border-slate-200 dark:border-[#333]"
             />
           </div>
         )}
 
-        <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
+        <div className="flex gap-2 pt-2">
           <Button 
-            disabled={settlingSubmitting} 
-            onClick={handleSettleExpenseAsReceiver} 
-            className="flex-1 bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold"
+            onClick={onSubmit} 
+            disabled={settlingSubmitting}
+            className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] disabled:opacity-50 text-white dark:text-black font-bold cursor-pointer"
           >
-            {settlingSubmitting ? "Processing..." : "Confirm"}
+            {settlingSubmitting ? "Processing..." : "Confirm Settlement"}
           </Button>
-          <Button onClick={onClose} variant="outline" className="border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">
+          <Button 
+            variant="ghost" 
+            onClick={onClose} 
+            className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+          >
             Cancel
           </Button>
         </div>
       </div>
     </div>
   );
-}
-
-export function EditExpenseModal({ editingExpense, onSuccess, onCancel }: any) {
-  if (!editingExpense) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-      <div className="bg-white dark:bg-[#18181b] p-6 rounded-xl border border-slate-200 dark:border-zinc-800 w-full max-w-lg space-y-4 text-slate-900 dark:text-zinc-100 shadow-2xl">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-zinc-800 pb-3">Edit Expense Form</h3>
-        <ExpenseForm initialData={editingExpense} onSuccess={onSuccess} onCancel={onCancel} />
-      </div>
-    </div>
-  );
-}
-
-export function PayShareModal({
-  selectedExpenseForPay,
-  receiverProfile,
-  paymentMethod,
-  setPaymentMethod,
-  paymentAmount,
-  setPaymentAmount,
-  setReceiptFile,
-  submitting,
-  submitPaymentRequest,
-  onClose,
-}: any) {
-  if (!selectedExpenseForPay) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
-      <div className="bg-white dark:bg-[#18181b] p-6 rounded-xl border border-slate-200 dark:border-zinc-800 w-full max-w-md space-y-4 text-slate-900 dark:text-zinc-100 shadow-2xl">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-zinc-800 pb-3">Submit Payment & Receipt</h3>
-        
-        <div className="bg-slate-50 dark:bg-zinc-900/80 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 text-center space-y-2">
-          <span className="text-xs text-slate-500 dark:text-zinc-400 uppercase tracking-wider font-medium">Payment Receiver</span>
-          <p className="font-bold text-[#4B49AC] dark:text-amber-400 text-base">
-            {receiverProfile?.username || receiverProfile?.full_name || "Assigned Receiver"}
-          </p>
-          {receiverProfile?.qr_code_url ? (
-            <img 
-              src={receiverProfile.qr_code_url} 
-              alt="QR Code" 
-              className="w-32 h-32 mx-auto rounded-lg border border-[#4B49AC]/40 dark:border-amber-500/40 object-contain bg-white p-1.5" 
-            />
-          ) : (
-            <div className="w-32 h-32 mx-auto bg-slate-100 dark:bg-zinc-950 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-zinc-700 text-slate-400 dark:text-zinc-500">
-              <QrCode className="h-8 w-8 text-[#4B49AC] dark:text-amber-500 mb-1" />
-              <span className="text-[10px]">No QR Available</span>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <span className="text-xs text-slate-500 dark:text-zinc-400">Remaining Share Due:</span>
-          <p className="text-lg font-bold text-slate-900 dark:text-white">₱{Number(paymentAmount).toFixed(2)}</p>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Payment Method</label>
-          <div className="flex gap-2">
-            <Button 
-              type="button" 
-              onClick={() => setPaymentMethod('online')} 
-              className={`flex-1 ${paymentMethod === 'online' ? 'bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold' : 'bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300'}`}
-            >
-              Online
-            </Button>
-            <Button 
-              type="button" 
-              onClick={() => { setPaymentMethod('cash'); setReceiptFile(null); }} 
-              className={`flex-1 ${paymentMethod === 'cash' ? 'bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold' : 'bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300'}`}
-            >
-              Cash
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Amount to Pay</label>
-          <Input 
-            type="number" 
-            step="0.01" 
-            value={paymentAmount} 
-            onChange={(e) => setPaymentAmount(e.target.value)} 
-            className="bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-white" 
-          />
-        </div>
-
-        {paymentMethod === 'online' && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Upload Receipt Proof <span className="text-[#4B49AC] dark:text-amber-400">*</span></label>
-            <Input 
-              type="file" 
-              accept="image/*" 
-              onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} 
-              className="bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 text-xs text-slate-900 dark:text-white" 
-            />
-          </div>
-        )}
-
-        <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
-          <Button 
-            onClick={submitPaymentRequest} 
-            disabled={submitting} 
-            className="flex-1 bg-[#4B49AC] hover:bg-[#3f3de9] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-zinc-950 font-semibold"
-          >
-            {submitting ? "Submitting..." : "Submit Payment"}
-          </Button>
-          <Button onClick={onClose} variant="outline" className="border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300">
-            Cancel
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+};
