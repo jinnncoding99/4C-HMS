@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, History, Plane, ChevronLeft, ChevronRight, Sun, Moon, MoreHorizontal } from "lucide-react";
+import { Loader2, History, Plane, ChevronRight, Sun, Moon, MoreHorizontal, FileText, Receipt } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
 import { BillSummary } from "../billing/BillSummary";
@@ -218,20 +218,20 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
       <section className="transition-all duration-300 mt-0">
         <div className="space-y-6">
           <Tabs defaultValue="bills" className="w-full">
-            <TabsList className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 w-full justify-start rounded-xl p-1.5 h-auto mb-3 shadow-sm">
-              <TabsTrigger 
-                value="bills" 
-                className="px-6 py-3 rounded-lg text-slate-600 dark:text-zinc-400 text-base font-semibold transition-all cursor-pointer hover:bg-[#4B49AC]/10 dark:hover:bg-amber-500/10 hover:text-[#4B49AC] dark:hover:text-amber-500 data-[state=active]:!bg-transparent dark:data-[state=active]:!bg-transparent data-[state=active]:!text-[#4B49AC] dark:data-[state=active]:!text-amber-500"
-              >
-                Monthly Bills
-              </TabsTrigger>
-              <TabsTrigger 
-                value="expenses" 
-                className="px-6 py-3 rounded-lg text-slate-600 dark:text-zinc-400 text-base font-semibold transition-all cursor-pointer hover:bg-[#4B49AC]/10 dark:hover:bg-amber-500/10 hover:text-[#4B49AC] dark:hover:text-amber-500 data-[state=active]:!bg-transparent dark:data-[state=active]:!bg-transparent data-[state=active]:!text-[#4B49AC] dark:data-[state=active]:!text-amber-500"
-              >
-                Expenses & Misc
-              </TabsTrigger>
-            </TabsList>
+            {/* Centered Underline Border Bar with slightly larger text (text-base) */}
+            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
+              <TabsList variant="line" className="w-full justify-center space-x-12">
+                <TabsTrigger value="bills" className="cursor-pointer gap-2 px-1 text-base">
+                  <FileText className="h-5 w-5" />
+                  <span>Monthly Bills</span>
+                </TabsTrigger>
+                
+                <TabsTrigger value="expenses" className="cursor-pointer gap-2 px-1 text-base">
+                  <Receipt className="h-5 w-5" />
+                  <span>Expenses & Misc</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="bills" className="focus-visible:outline-none">
               <div className="w-full">

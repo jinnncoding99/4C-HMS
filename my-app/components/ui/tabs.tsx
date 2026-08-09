@@ -1,3 +1,4 @@
+// components/ui/tabs.tsx
 "use client"
 
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"
@@ -62,7 +63,8 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
         /* REVISED: Uses #4B49AC for light mode active text and amber-500 for dark mode */
         "data-active:bg-transparent data-active:text-[#4B49AC] data-active:font-bold dark:data-active:bg-transparent dark:data-active:text-amber-500 dark:data-active:font-bold",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
+        /* REVISED: Brand-colored underline for active tab */
+        "after:absolute after:bg-[#4B49AC] dark:after:bg-amber-500 after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
         className
       )}
       {...props}
