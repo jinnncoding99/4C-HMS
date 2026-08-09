@@ -4,9 +4,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { FileText, Clock, Wallet, CheckCircle2 } from 'lucide-react';
 
-import { BillCard } from './BillCard';
+import { UnifiedDashboardCard } from '@/components/dashboard/UnifiedDashboardCard';
 import { AddBillDialog, EditBillModal, ReceiverSettleModal } from './BillModals';
 import PaymentModal from '@/components/dashboard/PaymentModal';
 
@@ -76,13 +76,45 @@ export const BillSummary = ({
     return !isBillPaid;
   });
 
+  // Calculate metrics for Top Summary Cards
+  const activeBillsCount = displayBills.length;
+
+  const totalPendingCollection = (bills || []).reduce((acc, bill) => {
+    const breakdown = billSharesMap[bill.id] || [];
+    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
+    if (bill.is_paid || bill.status === 'paid' || allSharesPaid) return acc;
+    const totalAmount = Number(bill.total_amount || bill.amount || 0);
+    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    return acc + Math.max(0, totalAmount - collected);
+  }, 0);
+
+  const totalCollected = (bills || []).reduce((acc, bill) => {
+    const breakdown = billSharesMap[bill.id] || [];
+    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    return acc + collected;
+  }, 0);
+
   const totalDue = (bills || []).reduce((acc: number, bill: any) => {
     const breakdown = billSharesMap[bill.id] || [];
     const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
     if (bill.is_paid || bill.status === 'paid' || allSharesPaid) return acc;
 
-    const myBreakdown = breakdown.find((item: any) => item.id === activeUserId);
-    return acc + (myBreakdown && !myBreakdown.isPaid && myBreakdown.status !== 'paid' ? Number(myBreakdown.shareDue) || 0 : 0);
+    const myBreakdown = breakdown.find((item: any) => item.id === activeUserId || item.boarder_id === activeUserId);
+    const isPaymentReceiver = bill.payment_receiver_id === activeUserId;
+    
+    if (!myBreakdown) return acc;
+
+    const nonReceiverShares = breakdown.filter((b: any) => (b.id || b.boarder_id) !== bill.payment_receiver_id);
+    const totalCollectedFromOthers = nonReceiverShares.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || 0), 0);
+    const receiverBaseShare = Number(myBreakdown.shareDue ?? myBreakdown.shared_amount ?? 0);
+
+    const userShareDue = isPaymentReceiver 
+      ? receiverBaseShare + totalCollectedFromOthers
+      : Math.max(0, receiverBaseShare - Number(myBreakdown.paidAmount || myBreakdown.paid_amount || 0));
+
+    const isMySharePaid = myBreakdown.isPaid || myBreakdown.is_paid || myBreakdown.status === 'paid';
+
+    return acc + (!isMySharePaid ? userShareDue : 0);
   }, 0);
 
   if (!isMounted) return null;
@@ -102,7 +134,6 @@ export const BillSummary = ({
               </p>
             </div>
             
-            {/* Add Bill restricted to Admin side */}
             {isAdmin && (
               <AddBillDialog 
                 isOpen={isOpen}
@@ -111,6 +142,39 @@ export const BillSummary = ({
                 onSuccess={fetchData}
               />
             )}
+          </div>
+
+          {/* Top Summary Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Active Bills Count</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{activeBillsCount}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Pending Collection</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalPendingCollection.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-green-400">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Collected</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalCollected.toFixed(2)}</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -122,20 +186,25 @@ export const BillSummary = ({
               </div>
             ) : (
               displayBills.map((bill: any) => (
-                <BillCard
+                <UnifiedDashboardCard
                   key={bill.id}
-                  bill={bill}
+                  item={bill}
                   breakdown={billSharesMap[bill.id] || []}
                   activeUserId={activeUserId}
                   isAdmin={isAdmin}
                   isDanz={isDanz}
                   isExpanded={!!expandedBills[bill.id]}
                   onToggleExpand={toggleExpand}
-                  onPayNow={handleOpenPayModal}
-                  onSettleBill={(b) => setSettlingBill(b)}
-                  onEditBill={(b) => setEditingBill(b)}
-                  onDeleteBill={deleteBill}
+                  onPayNow={(b, amt) => handleOpenPayModal(b, amt)}
+                  onSettleItem={(b) => {
+                    setSettlingBill(b);
+                    setSettleMethod('cash');
+                    setSettleReceiptFile(null);
+                  }}
+                  onEditItem={(b) => setEditingBill(b)}
+                  onDeleteItem={deleteBill}
                   userPaymentRequests={userPaymentRequests}
+                  type="bill"
                 />
               ))
             )}

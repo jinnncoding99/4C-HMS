@@ -5,9 +5,9 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, Clock, Wallet, CheckCircle2 } from "lucide-react";
 import ExpenseForm from "./ExpenseForm";
-import ExpenseCard from "./ExpenseCard";
+import { UnifiedDashboardCard } from '@/components/dashboard/UnifiedDashboardCard';
 import { SettleModal, EditExpenseModal, PayShareModal } from "./ExpenseModals";
 
 interface ExpenseSummaryProps {
@@ -55,7 +55,10 @@ export default function ExpenseSummary({
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const isAdmin = userRole?.toLowerCase() === 'admin';
   const activeUserId = currentUserId || userId || (profiles.length > 0 ? profiles[0]?.id : null);
+  const currentProfile = profiles.find((p: any) => p.id === activeUserId);
+  const isDanz = currentProfile?.username?.toLowerCase() === 'danz';
 
   const toggleExpand = (id: string) => {
     setExpandedExpenses(prev => ({ ...prev, [id]: !prev[id] }));
@@ -68,25 +71,54 @@ export default function ExpenseSummary({
     return !isExpensePaid;
   });
 
+  // Calculate metrics for Top Summary Cards
+  const activeExpensesCount = displayExpenses.length;
+
+  const totalPendingCollection = (expenses || []).reduce((acc, expense) => {
+    const breakdown = expenseSharesMap[expense.id] || [];
+    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
+    if (expense.is_paid || expense.status === 'paid' || allSharesPaid) return acc;
+    const totalAmount = Number(expense.total_amount || expense.amount || 0);
+    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    return acc + Math.max(0, totalAmount - collected);
+  }, 0);
+
+  const totalCollected = (expenses || []).reduce((acc, expense) => {
+    const breakdown = expenseSharesMap[expense.id] || [];
+    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    return acc + collected;
+  }, 0);
+
   const totalDue = (expenses || []).reduce((acc, expense) => {
     const breakdown = expenseSharesMap[expense.id] || [];
     const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
     if (expense.is_paid || expense.status === 'paid' || allSharesPaid) return acc;
 
-    const myBreakdown = breakdown.find((item: any) => item.id === activeUserId);
-    if (expense.payment_receiver_id === activeUserId) return acc;
+    const myBreakdown = breakdown.find((item: any) => item.id === activeUserId || item.boarder_id === activeUserId);
+    const isPaymentReceiver = expense.payment_receiver_id === activeUserId || expense.paid_by === activeUserId;
+    
+    if (!myBreakdown) return acc;
 
-    const netDue = myBreakdown ? Math.max(0, Number(myBreakdown.shareDue) - Number(myBreakdown.paid_amount || 0)) : 0;
-    return acc + (myBreakdown && !myBreakdown.isPaid && myBreakdown.status !== 'paid' ? netDue : 0);
+    const nonReceiverShares = breakdown.filter((b: any) => (b.id || b.boarder_id) !== (expense.payment_receiver_id || expense.paid_by));
+    const totalCollectedFromOthers = nonReceiverShares.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || 0), 0);
+    const receiverBaseShare = Number(myBreakdown.shareDue ?? myBreakdown.shared_amount ?? 0);
+
+    const userShareDue = isPaymentReceiver 
+      ? receiverBaseShare + totalCollectedFromOthers
+      : Math.max(0, receiverBaseShare - Number(myBreakdown.paidAmount || myBreakdown.paid_amount || 0));
+
+    const isMySharePaid = myBreakdown.isPaid || myBreakdown.is_paid || myBreakdown.status === 'paid';
+
+    return acc + (!isMySharePaid ? userShareDue : 0);
   }, 0);
 
   const receiverProfile = selectedExpenseForPay?.payment_receiver_id 
     ? profileMap.get(selectedExpenseForPay.payment_receiver_id) 
     : null;
 
-  const handleOpenPayModal = (expense: any, shareDue: number, paidAmount: number) => {
+  const handleOpenPayModal = (expense: any, shareDue: number) => {
     setSelectedExpenseForPay(expense);
-    setPaymentAmount(Math.max(0, shareDue - paidAmount).toString());
+    setPaymentAmount(shareDue.toString());
     setPaymentMethod('online');
     setReceiptFile(null);
   };
@@ -147,6 +179,39 @@ export default function ExpenseSummary({
             </Dialog>
           </div>
 
+          {/* Top Summary Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Active Expenses Count</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{activeExpensesCount}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Pending Collection</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalPendingCollection.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-green-400">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Total Collected</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">₱{totalCollected.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4">
             {displayExpenses.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
@@ -155,58 +220,28 @@ export default function ExpenseSummary({
                 <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1">All shared entries have been completely settled.</p>
               </div>
             ) : (
-              displayExpenses.map((expense) => {
-                const isExpanded = !!expandedExpenses[expense.id];
-                const breakdown = expenseSharesMap[expense.id] || [];
-                
-                const myBreakdown = breakdown.find((b: any) => b.id === activeUserId);
-                const userShareDue = myBreakdown ? myBreakdown.shareDue : 0; 
-                const userPaidAmount = myBreakdown ? Number(myBreakdown.paid_amount || 0) : 0;
-                const netUserShareDue = Math.max(0, userShareDue - userPaidAmount);
-                const isMySharePaid = myBreakdown?.isPaid || myBreakdown?.status === 'paid' || netUserShareDue === 0;
-
-                const hasPendingSubmission = userPaymentRequests.some((req: any) => 
-                  req.details?.expense_id === expense.id && req.details?.user_id === activeUserId
-                ) || myBreakdown?.status === 'pending_approval';
-
-                const hasAnyActivity = breakdown.some((b: any) => b.status === 'pending_approval' || b.status === 'paid' || b.isPaid) ||
-                  userPaymentRequests.some((req: any) => req.details?.expense_id === expense.id);
-
-                const allSharesArePaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
-                const isReceiver = expense.payment_receiver_id === activeUserId;
-
-                const receiverProfileObj = expense.payment_receiver_id ? profileMap.get(expense.payment_receiver_id) : null;
-                const receiverName = receiverProfileObj?.username || receiverProfileObj?.full_name || 'N/A';
-
-                return (
-                  <ExpenseCard
-                    key={expense.id}
-                    expense={expense}
-                    breakdown={breakdown}
-                    activeUserId={activeUserId}
-                    isExpanded={isExpanded}
-                    hasPendingSubmission={hasPendingSubmission}
-                    hasAnyActivity={hasAnyActivity}
-                    allSharesArePaid={allSharesArePaid}
-                    isReceiver={isReceiver}
-                    receiverName={receiverName}
-                    myBreakdown={myBreakdown}
-                    userShareDue={userShareDue}
-                    userPaidAmount={userPaidAmount}
-                    netUserShareDue={netUserShareDue}
-                    isMySharePaid={isMySharePaid}
-                    onToggleExpand={toggleExpand}
-                    onOpenPayModal={handleOpenPayModal}
-                    onOpenSettleModal={(exp) => {
-                      setSettlingExpense(exp);
-                      setSettleMethod('cash');
-                      setSettleReceiptFile(null);
-                    }}
-                    onEdit={(exp) => setEditingExpense(exp)}
-                    onDelete={deleteExpense}
-                  />
-                );
-              })
+              displayExpenses.map((expense) => (
+                <UnifiedDashboardCard
+                  key={expense.id}
+                  item={expense}
+                  breakdown={expenseSharesMap[expense.id] || []}
+                  activeUserId={activeUserId}
+                  isAdmin={isAdmin}
+                  isDanz={isDanz}
+                  isExpanded={!!expandedExpenses[expense.id]}
+                  onToggleExpand={toggleExpand}
+                  onPayNow={(exp, amt) => handleOpenPayModal(exp, amt)}
+                  onSettleItem={(exp) => {
+                    setSettlingExpense(exp);
+                    setSettleMethod('cash');
+                    setSettleReceiptFile(null);
+                  }}
+                  onEditItem={(exp) => setEditingExpense(exp)}
+                  onDeleteItem={deleteExpense}
+                  userPaymentRequests={userPaymentRequests}
+                  type="expense"
+                />
+              ))
             )}
           </div>
 
