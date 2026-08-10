@@ -1,3 +1,4 @@
+// components/dashboard/UserManagementModal.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -111,7 +112,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-[9999] overflow-y-auto">
-      {/* Modal Container with fixed desktop height to prevent jumping layout size when filtering */}
+      {/* Modal Container */}
       <div className="bg-white dark:bg-[#18181b] w-full max-w-5xl rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col h-[90vh] max-h-[850px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Header */}
@@ -129,37 +130,37 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
         </div>
 
         {/* Modal Body Scrollable Area */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
           
-          {/* Summary Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0">
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+          {/* Summary Statistics Cards - Responsive 3-Column Layout */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 shrink-0">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Total Users</p>
-                <h3 className="text-2xl font-black mt-1 text-slate-900 dark:text-white">{totalCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Total</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-slate-900 dark:text-white">{totalCount}</h3>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Users size={20} />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Users size={18} />
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Admins</p>
-                <h3 className="text-2xl font-black mt-1 text-amber-600 dark:text-amber-500">{adminCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Admins</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-amber-600 dark:text-amber-500">{adminCount}</h3>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <Shield size={20} />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Shield size={18} />
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Boarders</p>
-                <h3 className="text-2xl font-black mt-1 text-indigo-600 dark:text-indigo-400">{boarderCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Boarders</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-indigo-600 dark:text-indigo-400">{boarderCount}</h3>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <UserIcon size={20} />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <UserIcon size={18} />
               </div>
             </div>
           </div>
@@ -225,7 +226,11 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
           ) : (
             <motion.div 
               layout 
-              className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}
+              className={
+                viewMode === 'grid' 
+                  ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4" 
+                  : "flex flex-col space-y-2 sm:space-y-3"
+              }
             >
               <AnimatePresence>
                 {filteredUsers.map((user) => {
@@ -239,15 +244,20 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.2 }}
-                      className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col justify-between shadow-2xs hover:shadow-md transition-all gap-4"
+                      className={`bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xs hover:shadow-md transition-all ${
+                        viewMode === 'grid' 
+                          ? 'p-4 rounded-2xl flex flex-col justify-between gap-4 text-center items-center' 
+                          : 'p-3 sm:p-4 rounded-2xl flex flex-row items-center justify-between gap-3'
+                      }`}
                     >
                       {/* Header/Info: Thumbnail Initials + Username & Role badge */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center font-bold justify-center text-sm shrink-0">
+                      <div className={`flex ${viewMode === 'grid' ? 'flex-col items-center' : 'flex-row items-center'} gap-3 w-full min-w-0`}>
+                        <div className={`${viewMode === 'grid' ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full text-lg' : 'w-10 h-10 rounded-xl text-sm'} bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center font-bold justify-center shrink-0`}>
                           {user.username ? user.username.slice(0, 2).toUpperCase() : 'U'}
                         </div>
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5 truncate">
+                        
+                        <div className={`min-w-0 flex-1 flex flex-col ${viewMode === 'grid' ? 'items-center' : 'items-start'}`}>
+                          <h4 className={`font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5 w-full ${viewMode === 'grid' ? 'justify-center' : 'justify-start'}`}>
                             <span className="truncate">{user.username}</span>
                             {user.id === currentUserId && (
                               <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-md font-medium shrink-0">(You)</span>
@@ -265,17 +275,21 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
                       </div>
 
                       {/* Actions Footer */}
-                      <div className="flex items-center justify-end pt-3 border-t border-slate-100 dark:border-zinc-800 gap-2">
+                      <div className={`flex items-center gap-2 ${
+                        viewMode === 'grid' 
+                          ? 'w-full pt-4 border-t border-slate-100 dark:border-zinc-800 flex-row justify-center' 
+                          : 'shrink-0'
+                      }`}>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold cursor-pointer h-8 shadow-none"
+                          className={`text-xs border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold cursor-pointer h-8 shadow-none ${viewMode === 'grid' ? 'flex-1 px-0' : 'px-3'}`}
                           disabled={loading === user.id}
                           onClick={() => setUserToModify({ id: user.id, role: user.role, username: user.username })}
                         >
                           {loading === user.id 
-                            ? "Updating..." 
-                            : isAdmin ? 'Demote to Boarder' : 'Promote to Admin'}
+                            ? "..." 
+                            : isAdmin ? 'Demote' : 'Promote'}
                         </Button>
 
                         <Button 
@@ -296,16 +310,6 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
             </motion.div>
           )}
         </div>
-
-        {/* Modal Footer / Close Action */}
-        <div className="px-6 py-3 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 flex justify-end shrink-0">
-          <Button 
-            onClick={onClose}
-            className="bg-slate-200 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 hover:bg-slate-300 dark:hover:bg-zinc-700 text-xs font-bold px-5 cursor-pointer shadow-none"
-          >
-            Close Modal
-          </Button>
-        </div>
       </div>
 
       {/* Confirmation Sub-Modal for Role Change */}
@@ -316,7 +320,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Confirm Role Change</h3>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                Are you sure you want to change <strong>{userToModify.username}'s</strong> role?
+                Are you sure you want to change <strong>{userToModify.username}&apos;s</strong> role?
               </p>
             </div>
             <div className="flex gap-3 pt-2">

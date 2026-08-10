@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, User as UserIcon, LogOut, QrCode, Edit2, Users, Bell, Check, X, Plane, CreditCard } from "lucide-react";
+import { ShieldCheck, User as UserIcon, LogOut, Edit2, Users, Bell, Check, X, Plane, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client"; 
 import UserManagementModal from "@/components/dashboard/UserManagementModal";
+import EditProfileModal from "@/components/dashboard/EditProfileModal";
 
 interface DashboardHeaderProps {
   title: string;
@@ -37,8 +38,10 @@ export default function DashboardHeader({ title, role, username: initialUsername
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [username, setUsername] = useState<string>(initialUsername || "Loading...");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   const router = useRouter();
@@ -48,28 +51,35 @@ export default function DashboardHeader({ title, role, username: initialUsername
 
   const isAdmin = role?.trim().toLowerCase() === 'admin';
 
+  const fetchUserData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUserId(user.id);
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData) {
+        if (profileData.username) {
+          setUsername(profileData.username);
+        } else {
+          setUsername(user.email?.split('@')[0] || "User");
+        }
+        if (profileData.avatar_url) {
+          setAvatarUrl(profileData.avatar_url);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (!initialUsername) {
-      const fetchUserData = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setCurrentUserId(user.id);
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', user.id)
-            .single();
-
-          if (profileData?.username) {
-            setUsername(profileData.username);
-          } else {
-            setUsername(user.email?.split('@')[0] || "User");
-          }
-        }
-      };
       fetchUserData();
     } else {
       setUsername(initialUsername);
+      fetchUserData();
     }
   }, [initialUsername, supabase]);
 
@@ -341,8 +351,10 @@ export default function DashboardHeader({ title, role, username: initialUsername
     }
   };
 
-  const handleEditUsername = () => { setIsMenuOpen(false); router.push('/dashboard/settings'); };
-  const handleManageQR = () => { router.push('/dashboard/qr'); setIsMenuOpen(false); };
+  const handleEditUsername = () => { 
+    setIsMenuOpen(false); 
+    setIsEditProfileOpen(true); 
+  };
   
   const handleUserManagement = () => { 
     setIsMenuOpen(false); 
@@ -460,12 +472,22 @@ export default function DashboardHeader({ title, role, username: initialUsername
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
-                <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
-                  <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{username}</p>
-                  <button onClick={handleEditUsername} className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1.5 hover:underline mt-1 cursor-pointer">
-                    <Edit2 size={12} /> Edit Profile
-                  </button>
+              <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[9999] p-2 animate-in fade-in zoom-in duration-200">
+                {/* Profile Header with Initials/Avatar Style */}
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
+                  <div className="w-10 h-10 rounded-full bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      username ? username.slice(0, 2).toUpperCase() : 'U'
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{username}</p>
+                    <button onClick={handleEditUsername} className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1 hover:underline mt-0.5 cursor-pointer">
+                      <Edit2 size={11} /> Edit Profile
+                    </button>
+                  </div>
                 </div>
                 
                 <nav className="flex flex-col gap-1 mt-1">
@@ -474,10 +496,6 @@ export default function DashboardHeader({ title, role, username: initialUsername
                       <Users size={16} className="text-[#4B49AC] dark:text-[#ff8c00]" /> User Management
                     </button>
                   )}
-                  
-                  <button onClick={handleManageQR} className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition cursor-pointer">
-                    <QrCode size={16} className="text-[#4B49AC] dark:text-[#ff8c00]" /> Manage QR Code
-                  </button>
                   
                   <div className="h-px bg-slate-100 dark:bg-zinc-800 mx-2 my-1" />
                   
@@ -496,6 +514,13 @@ export default function DashboardHeader({ title, role, username: initialUsername
       <UserManagementModal 
         isOpen={isUserManagementOpen} 
         onClose={() => setIsUserManagementOpen(false)} 
+      />
+
+      {/* Edit Profile Modal Component */}
+      <EditProfileModal 
+        isOpen={isEditProfileOpen} 
+        onClose={() => setIsEditProfileOpen(false)} 
+        onProfileUpdated={fetchUserData}
       />
     </>
   );
