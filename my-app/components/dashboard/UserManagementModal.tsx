@@ -1,4 +1,3 @@
-// components/dashboard/UserManagementModal.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -41,7 +40,11 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
 
   const fetchUsers = async () => {
     const { data } = await supabase.from("profiles").select("*");
-    if (data) setUsers(data);
+    if (data) {
+      // Filter out the system placeholder so it doesn't show up in the management UI
+      const activeUsers = data.filter(u => u.id !== '00000000-0000-0000-0000-000000000000');
+      setUsers(activeUsers);
+    }
   };
 
   const executeRoleUpdate = async () => {
@@ -75,19 +78,24 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
     setLoadState(userId);
     setUserToDelete(null);
 
-    const { error } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", userId);
+    try {
+      // Deleting the profile automatically shifts related financial history 
+      // to the 'Unknown Member' placeholder via ON DELETE SET DEFAULT constraints.
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
 
-    if (error) {
-      console.error("Error deleting user:", error.message);
-      toast.error("Failed to delete user: " + error.message);
-    } else {
-      toast.success(`User ${username} successfully deleted.`);
+      if (profileError) throw profileError;
+
+      toast.success(`User ${username} successfully deleted. History reassigned.`);
       fetchUsers();
+    } catch (err: any) {
+      console.error("Error deleting user:", err.message);
+      toast.error("Failed to delete user: " + (err.message || "Check database foreign keys/RLS policies."));
+    } finally {
+      setLoadState(null);
     }
-    setLoadState(null);
   };
 
   const filteredUsers = users.filter((user) => {
@@ -132,7 +140,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
         {/* Modal Body Scrollable Area */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
           
-          {/* Summary Statistics Cards - Responsive 3-Column Layout */}
+          {/* Summary Statistics Cards */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 shrink-0">
             <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
@@ -214,7 +222,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
             </div>
           </div>
 
-          {/* User Cards / List Display Container with Framer Motion animations */}
+          {/* User Cards / List Display */}
           {filteredUsers.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0 }} 
@@ -250,10 +258,14 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
                           : 'p-3 sm:p-4 rounded-2xl flex flex-row items-center justify-between gap-3'
                       }`}
                     >
-                      {/* Header/Info: Thumbnail Initials + Username & Role badge */}
+                      {/* Avatar & User Info */}
                       <div className={`flex ${viewMode === 'grid' ? 'flex-col items-center' : 'flex-row items-center'} gap-3 w-full min-w-0`}>
-                        <div className={`${viewMode === 'grid' ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full text-lg' : 'w-10 h-10 rounded-xl text-sm'} bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center font-bold justify-center shrink-0`}>
-                          {user.username ? user.username.slice(0, 2).toUpperCase() : 'U'}
+                        <div className={`${viewMode === 'grid' ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full text-lg' : 'w-10 h-10 rounded-xl text-sm'} bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center font-bold justify-center shrink-0 overflow-hidden`}>
+                          {user.avatar_url ? (
+                            <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                          ) : (
+                            user.username ? user.username.slice(0, 2).toUpperCase() : 'U'
+                          )}
                         </div>
                         
                         <div className={`min-w-0 flex-1 flex flex-col ${viewMode === 'grid' ? 'items-center' : 'items-start'}`}>
@@ -287,9 +299,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
                           disabled={loading === user.id}
                           onClick={() => setUserToModify({ id: user.id, role: user.role, username: user.username })}
                         >
-                          {loading === user.id 
-                            ? "..." 
-                            : isAdmin ? 'Demote' : 'Promote'}
+                          {loading === user.id ? "..." : isAdmin ? 'Demote' : 'Promote'}
                         </Button>
 
                         <Button 
@@ -343,7 +353,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Delete User</h3>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                Are you sure you want to completely delete <strong>{userToDelete.username}</strong>? This action cannot be undone.
+                Are you sure you want to completely delete <strong>{userToDelete.username}</strong>? Their historical transactions will be safely reassigned to Unknown Member.
               </p>
             </div>
             <div className="flex gap-3 pt-2">
