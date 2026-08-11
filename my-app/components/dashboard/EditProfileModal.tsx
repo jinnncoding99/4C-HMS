@@ -27,12 +27,28 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
   
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [qrPreview, setQrPreview] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
+
+  // Keep track of created blob URLs to clean up memory
+  const objectUrlsRef = useRef<string[]>([]);
+
+  const trackObjectUrl = (url: string) => {
+    objectUrlsRef.current.push(url);
+    return url;
+  };
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -176,7 +192,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
       if (blob) {
         const croppedFile = new File([blob], `avatar-${Date.now()}.png`, { type: 'image/png' });
         setAvatarFile(croppedFile);
-        setAvatarPreview(URL.createObjectURL(blob));
+        setAvatarPreview(trackObjectUrl(URL.createObjectURL(blob)));
         setRawAvatarSrc(null);
       }
     }, 'image/png', 0.95);
@@ -189,8 +205,90 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
         toast.error("Please upload a valid image file for the QR code.");
         return;
       }
-      setQrFile(file);
-      setQrPreview(URL.createObjectURL(file));
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = qrCanvasRef.current;
+          if (!canvas) {
+            setQrFile(file);
+            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
+            return;
+          }
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setQrFile(file);
+            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
+            return;
+          }
+
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          ctx.drawImage(img, 0, 0);
+
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+          const width = canvas.width;
+          const height = canvas.height;
+
+          let minX = width, minY = height, maxX = 0, maxY = 0;
+          const threshold = 230;
+
+          for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+              const idx = (y * width + x) * 4;
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+              if (r < threshold || g < threshold || b < threshold) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+
+          if (minX > maxX || minY > maxY) {
+            minX = 0; minY = 0; maxX = width; maxY = height;
+          } else {
+            const padding = 15;
+            minX = Math.max(0, minX - padding);
+            minY = Math.max(0, minY - padding);
+            maxX = Math.min(width, maxX + padding);
+            maxY = Math.min(height, maxY + padding);
+          }
+
+          const cropWidth = maxX - minX;
+          const cropHeight = maxY - minY;
+
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = cropWidth;
+          croppedCanvas.height = cropHeight;
+          const croppedCtx = croppedCanvas.getContext('2d');
+
+          if (croppedCtx) {
+            croppedCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+            croppedCanvas.toBlob((blob) => {
+              if (blob) {
+                const croppedFile = new File([blob], `qr-${Date.now()}.png`, { type: 'image/png' });
+                setQrFile(croppedFile);
+                setQrPreview(trackObjectUrl(URL.createObjectURL(blob)));
+              } else {
+                setQrFile(file);
+                setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
+              }
+            }, 'image/png', 0.95);
+          } else {
+            setQrFile(file);
+            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
+          }
+        };
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -306,6 +404,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       
       <canvas ref={canvasRef} className="hidden" />
+      <canvas ref={qrCanvasRef} className="hidden" />
 
       {rawAvatarSrc && (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
@@ -436,7 +535,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
                 {qrPreview ? (
-                  <img src={qrPreview} alt="QR Preview" className="w-full h-full object-cover" />
+                  <img src={qrPreview} alt="QR Preview" className="w-full h-full object-contain bg-white" />
                 ) : (
                   <QrCode size={24} className="text-slate-400" />
                 )}

@@ -13,6 +13,24 @@ export default function RoleListenerModal({ currentUserId }: { currentUserId: st
   useEffect(() => {
     if (!currentUserId) return;
 
+    let initialRole: string | null = null;
+
+    // 1. Fetch the baseline role when the component mounts
+    const fetchInitialRole = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUserId)
+        .single();
+      
+      if (data) {
+        initialRole = data.role;
+      }
+    };
+
+    fetchInitialRole();
+
+    // 2. Listen for realtime updates
     const channel = supabase
       .channel(`role-changes-${currentUserId}`)
       .on(
@@ -24,9 +42,19 @@ export default function RoleListenerModal({ currentUserId }: { currentUserId: st
           filter: `id=eq.${currentUserId}`,
         },
         (payload: any) => {
-          const updatedRole = payload.new.role;
-          setNewRoleName(updatedRole);
-          setShowModal(true);
+          const updatedRole = payload.new?.role;
+
+          // Only trigger if we have a recorded baseline role, 
+          // a new role exists, and they are strictly different!
+          if (initialRole && updatedRole && initialRole !== updatedRole) {
+            setNewRoleName(updatedRole);
+            setShowModal(true);
+          }
+
+          // Update baseline so subsequent updates compare correctly
+          if (updatedRole) {
+            initialRole = updatedRole;
+          }
         }
       )
       .subscribe();
