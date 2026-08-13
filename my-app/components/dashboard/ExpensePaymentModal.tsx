@@ -205,7 +205,7 @@ export default function ExpensePaymentModal({
         toast.success("Expense successfully settled and removed!");
       } else {
         const notificationPayload = {
-          type: 'payment_approval',
+          type: 'expense_approval',
           email: user.email || 'User',
           message: `Payment submitted for expense: ${expense.description} via ${paymentMethod.toUpperCase()} amount: ₱${parsedAmount.toFixed(2)}`,
           status: 'pending',

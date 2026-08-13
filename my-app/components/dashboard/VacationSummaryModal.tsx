@@ -1,9 +1,10 @@
+// components/dashboard/VacationSummaryModal.tsx
 'use client';
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { Plane, Plus, ArrowLeft, X, Calendar, Check, Ban } from "lucide-react";
+import { Plane, Plus, ArrowLeft, Calendar, Check, Ban } from "lucide-react";
 import VacationRequestComponent from "@/app/dashboard/vacation/page";
 
 interface VacationRequest {
@@ -13,7 +14,7 @@ interface VacationRequest {
   start_date: string;
   end_date: string;
   days_requested?: number;
-  status?: string; // 'pending' or 'approved' or 'rejected'
+  status?: string; 
   created_at?: string;
 }
 
@@ -46,7 +47,6 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       return;
     }
 
-    // Check if current user is an admin
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -56,14 +56,12 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
     const userIsAdmin = profile?.role?.toLowerCase() === 'admin';
     setIsAdmin(userIsAdmin);
 
-    // Fetch all vacation requests for all users so everyone can view them
     const { data } = await supabase
       .from("vacation_history")
       .select("*")
       .order("start_date", { ascending: false });
 
     if (data) {
-      // Filter out rejected ones if you don't want them showing up, or keep them if needed
       const activeVacations = data.filter(v => (v.status || 'pending').toLowerCase() !== 'rejected');
       setVacations(activeVacations);
     }
@@ -77,7 +75,6 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       .eq("id", id);
 
     if (!error) {
-      // Refresh the list after update
       fetchUserDataAndVacations();
     } else {
       alert("Failed to update leave status.");
@@ -97,13 +94,9 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
     if (!matchesDate) return false;
 
     const currentStatus = (v.status || 'pending').toLowerCase();
-    if (filterType === 'approved') {
-      return currentStatus === 'approved';
-    }
-    if (filterType === 'pending') {
-      return currentStatus === 'pending';
-    }
-    return true; // 'all'
+    if (filterType === 'approved') return currentStatus === 'approved';
+    if (filterType === 'pending') return currentStatus === 'pending';
+    return true;
   });
 
   return (
@@ -111,20 +104,14 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       {/* Header section */}
       <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
         {onBack && (
-          <div className="flex justify-between items-center">
+          <div className="flex items-center w-full">
             <Button 
               onClick={onBack}
               title="Return"
-              className="md:hidden bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
+              className="bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0 shadow-sm"
             >
               <ArrowLeft size={18} />
             </Button>
-            <button 
-              onClick={onBack}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-muted border border-border px-3 py-1.5 rounded-lg"
-            >
-              <X size={14} /> Close
-            </button>
           </div>
         )}
 
@@ -149,28 +136,28 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
       </div>
 
       {/* Date Range Selector Toolbar */}
-      <div className="flex flex-wrap items-center justify-center gap-3 bg-card p-3 rounded-xl border border-border text-xs">
-        <span className="text-muted-foreground flex items-center gap-1 font-medium">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
+        <span className="text-muted-foreground flex items-center gap-1 font-medium shrink-0">
           <Calendar size={14} className="text-primary" /> Date Range Filter:
         </span>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
           <input 
             type="date" 
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none"
           />
           <span className="text-muted-foreground">to</span>
           <input 
             type="date" 
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none"
           />
           {(startDate || endDate) && (
             <button 
               onClick={() => { setStartDate(''); setEndDate(''); }} 
-              className="text-primary hover:underline ml-2 cursor-pointer"
+              className="text-primary hover:underline ml-2 cursor-pointer font-medium shrink-0"
             >
               Clear
             </button>
@@ -178,25 +165,25 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap justify-center gap-2 border-b border-border pb-4">
+      {/* Horizontal Short Filter Buttons */}
+      <div className="flex items-center justify-start sm:justify-center gap-2 border-b border-border pb-4 overflow-x-auto scrollbar-none">
         <Button 
           onClick={() => setFilterType('all')} 
-          className={`text-xs cursor-pointer ${filterType === 'all' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'all' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
-          All Requests ({vacations.length})
+          All
         </Button>
         <Button 
           onClick={() => setFilterType('approved')} 
-          className={`text-xs cursor-pointer ${filterType === 'approved' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'approved' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
-          Approve Requests ({vacations.filter(v => (v.status || 'pending').toLowerCase() === 'approved').length})
+          Approved
         </Button>
         <Button 
           onClick={() => setFilterType('pending')} 
-          className={`text-xs cursor-pointer ${filterType === 'pending' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'pending' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
         >
-          Pending Requests ({vacations.filter(v => (v.status || 'pending').toLowerCase() === 'pending').length})
+          Pending
         </Button>
       </div>
 
@@ -221,8 +208,7 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Admin Approval Actions for Pending items */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     {isAdmin && status === 'pending' ? (
                       <div className="flex items-center gap-1.5">
                         <Button 
@@ -259,10 +245,10 @@ export default function VacationSummaryModal({ onBack }: VacationSummaryModalPro
         )}
       </div>
 
-      {/* Pop-up Modal containing the Vacation Request Form */}
+      {/* Pop-up Modal occupying full screen with glass blur background */}
       {isRequestModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-md shadow-2xl relative text-card-foreground">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-md p-0 sm:p-4">
+          <div className="bg-card p-6 w-full h-full sm:w-auto sm:h-auto sm:max-w-md sm:rounded-2xl rounded-none border-0 sm:border border-primary shadow-2xl relative text-card-foreground overflow-y-auto flex flex-col justify-between">
             <VacationRequestComponent 
               onBack={() => setIsRequestModalOpen(false)}
               onSuccess={() => {

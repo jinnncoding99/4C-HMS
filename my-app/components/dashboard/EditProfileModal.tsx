@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Upload, User, Mail, QrCode, Trash2, ZoomIn, ZoomOut, Check, Minimize2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { autoCropQR } from "@/lib/cropQr";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -27,7 +28,6 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
   
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   const [qrFile, setQrFile] = useState<File | null>(null);
   const [qrPreview, setQrPreview] = useState<string | null>(null);
@@ -198,7 +198,8 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
     }, 'image/png', 0.95);
   };
 
-  const handleQrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // QR Code validation & auto-crop integration
+  const handleQrChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
@@ -206,89 +207,14 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = qrCanvasRef.current;
-          if (!canvas) {
-            setQrFile(file);
-            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
-            return;
-          }
-
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            setQrFile(file);
-            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
-            return;
-          }
-
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          ctx.drawImage(img, 0, 0);
-
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imgData.data;
-          const width = canvas.width;
-          const height = canvas.height;
-
-          let minX = width, minY = height, maxX = 0, maxY = 0;
-          const threshold = 230;
-
-          for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-              const idx = (y * width + x) * 4;
-              const r = data[idx];
-              const g = data[idx + 1];
-              const b = data[idx + 2];
-              if (r < threshold || g < threshold || b < threshold) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-              }
-            }
-          }
-
-          if (minX > maxX || minY > maxY) {
-            minX = 0; minY = 0; maxX = width; maxY = height;
-          } else {
-            const padding = 15;
-            minX = Math.max(0, minX - padding);
-            minY = Math.max(0, minY - padding);
-            maxX = Math.min(width, maxX + padding);
-            maxY = Math.min(height, maxY + padding);
-          }
-
-          const cropWidth = maxX - minX;
-          const cropHeight = maxY - minY;
-
-          const croppedCanvas = document.createElement('canvas');
-          croppedCanvas.width = cropWidth;
-          croppedCanvas.height = cropHeight;
-          const croppedCtx = croppedCanvas.getContext('2d');
-
-          if (croppedCtx) {
-            croppedCtx.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-            croppedCanvas.toBlob((blob) => {
-              if (blob) {
-                const croppedFile = new File([blob], `qr-${Date.now()}.png`, { type: 'image/png' });
-                setQrFile(croppedFile);
-                setQrPreview(trackObjectUrl(URL.createObjectURL(blob)));
-              } else {
-                setQrFile(file);
-                setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
-              }
-            }, 'image/png', 0.95);
-          } else {
-            setQrFile(file);
-            setQrPreview(trackObjectUrl(URL.createObjectURL(file)));
-          }
-        };
-      };
-      reader.readAsDataURL(file);
+      try {
+        const processedFile = await autoCropQR(file);
+        setQrFile(processedFile);
+        setQrPreview(trackObjectUrl(URL.createObjectURL(processedFile)));
+        toast.success("QR code verified and auto-cropped successfully!");
+      } catch (err: any) {
+        toast.error(err.message || "Invalid QR code! No recognizable QR pattern was found in this image.");
+      }
     }
   };
 
@@ -380,13 +306,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
 
       if (profileError) throw profileError;
 
-      if (email && email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser({ email });
-        if (emailError) throw emailError;
-        toast.success("Profile updated! Please check your new email inbox to verify the change.");
-      } else {
-        toast.success("Profile updated successfully!");
-      }
+      toast.success("Profile updated successfully!");
 
       if (onProfileUpdated) {
         onProfileUpdated();
@@ -404,7 +324,6 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       
       <canvas ref={canvasRef} className="hidden" />
-      <canvas ref={qrCanvasRef} className="hidden" />
 
       {rawAvatarSrc && (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
@@ -517,15 +436,17 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Email Address</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Email Address</label>
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500 italic">Cannot be modified</span>
+            </div>
             <div className="relative flex items-center">
               <Mail size={16} className="absolute left-3 text-slate-400" />
               <input 
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4B49AC]/30 dark:focus:ring-[#ff8c00]/30 dark:focus:border-[#ff8c00]"
+                disabled
+                className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-500 dark:text-zinc-400 cursor-not-allowed select-none"
               />
             </div>
           </div>

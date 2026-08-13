@@ -1,3 +1,4 @@
+// app/notifications/page.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Bell, Plane, CreditCard, UserPlus } from "lucide-react";
+import { ArrowLeft, Bell, Plane, CreditCard, UserPlus, Receipt } from "lucide-react";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -18,7 +19,21 @@ export default function NotificationsPage() {
   }, []);
 
   const fetchNotifications = async () => {
-    const { data } = await supabase.from('notifications').select('*');
+    // 1. Get current authenticated user to fetch only their targeted notifications
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // 2. Filter notifications meant for this specific user ID or email
+    // Adjust 'user_id' or 'email' depending on how your notification table links users
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .or(`email.eq.${user.email},details->>user_id.eq.${user.id}`);
+
+    if (error) {
+      console.error("Error fetching notifications:", error);
+    }
+
     const notifs = data || [];
     setNotifications(notifs);
     
@@ -43,6 +58,9 @@ export default function NotificationsPage() {
     switch (type) {
       case 'vacation': return <Plane size={18} />;
       case 'payment_approval': return <CreditCard size={18} />;
+      case 'bill':
+      case 'bill_announcement': return <Receipt size={18} />;
+      case 'expense_announcement': return <Receipt size={18} />;
       default: return <UserPlus size={18} />;
     }
   };
@@ -136,7 +154,21 @@ export default function NotificationsPage() {
 
     await supabase.from('notifications').delete().eq('id', selectedNotif.id);
     setSelectedNotif(null);
-    window.location.reload();
+    
+    window.dispatchEvent(new Event('billing-updated'));
+    window.dispatchEvent(new Event('notification-updated'));
+    
+    fetchNotifications();
+  };
+
+  const handleDismiss = async () => {
+    if (!selectedNotif) return;
+    await supabase.from('notifications').delete().eq('id', selectedNotif.id);
+    setSelectedNotif(null);
+
+    window.dispatchEvent(new Event('notification-updated'));
+    
+    fetchNotifications();
   };
 
   return (
@@ -170,7 +202,11 @@ export default function NotificationsPage() {
       {selectedNotif && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
           <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-sm text-card-foreground shadow-2xl">
-            <h3 className="text-lg font-bold text-foreground mb-4">Process {selectedNotif.type?.replace('_', ' ')}</h3>
+            <h3 className="text-lg font-bold text-foreground mb-4">
+              {selectedNotif.type === 'bill' || selectedNotif.type === 'bill_announcement' || selectedNotif.type === 'expense_announcement'
+                ? 'New Notice' 
+                : `Process ${selectedNotif.type?.replace('_', ' ')}`}
+            </h3>
             
             <div className="bg-muted p-3 rounded-lg mb-4 border border-border">
               <p className="text-sm font-bold text-primary">{selectedNotif.email || "System"}</p>
@@ -193,10 +229,17 @@ export default function NotificationsPage() {
               </div>
             )}
 
-            <div className="flex gap-4">
-              <Button onClick={() => handleAction(true)} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer">Approve</Button>
-              <Button onClick={() => handleAction(false)} variant="destructive" className="flex-1 cursor-pointer">Reject</Button>
-            </div>
+            {selectedNotif.type === 'bill' || selectedNotif.type === 'bill_announcement' || selectedNotif.type === 'expense_announcement' ? (
+              <div className="flex flex-col gap-2">
+                <Button onClick={handleDismiss} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer">Got It</Button>
+              </div>
+            ) : (
+              <div className="flex gap-4">
+                <Button onClick={() => handleAction(true)} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold cursor-pointer">Approve</Button>
+                <Button onClick={() => handleAction(false)} variant="destructive" className="flex-1 cursor-pointer">Reject</Button>
+              </div>
+            )}
+            
             <Button variant="ghost" onClick={() => setSelectedNotif(null)} className="w-full mt-2 text-muted-foreground hover:text-foreground cursor-pointer">Cancel</Button>
           </div>
         </div>

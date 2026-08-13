@@ -1,9 +1,10 @@
+// components/dashboard/VacationRequestComponent.tsx
 'use client';
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plane, ArrowLeft, X } from "lucide-react";
+import { Plane, ArrowLeft, Loader2 } from "lucide-react";
 
 interface VacationRequestProps {
   onSuccess?: () => void;
@@ -62,77 +63,80 @@ export default function VacationRequestComponent({ onSuccess, onBack }: Vacation
   const handleReturn = onBack || onSuccess;
 
   return (
-    <div className="text-foreground space-y-4">
-      <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
-        {handleReturn && (
-          <div className="flex justify-between items-center">
-            <Button 
-              onClick={handleReturn}
-              title="Return"
-              className="md:hidden bg-card border border-border hover:bg-muted text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
-            >
-              <ArrowLeft size={18} />
-            </Button>
+    <form onSubmit={handleSubmit} className="text-foreground flex flex-col justify-between h-full w-full space-y-6">
+      <div className="space-y-6">
+        {/* Header section */}
+        <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
+          {handleReturn && (
+            <div className="flex items-center w-full">
+              <Button 
+                type="button"
+                onClick={handleReturn}
+                title="Return"
+                className="bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0 shadow-sm"
+              >
+                <ArrowLeft size={18} />
+              </Button>
+            </div>
+          )}
 
-            <button 
-              onClick={handleReturn}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-card border border-border px-3 py-1.5 rounded-lg"
-            >
-              <X size={14} /> Close
-            </button>
+          <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left w-full">
+            <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
+              <Plane size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Request Vacation</h2>
+              <p className="text-sm text-muted-foreground">Submit your scheduled time off.</p>
+            </div>
           </div>
-        )}
+        </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left w-full">
-          <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
-            <Plane size={24} />
+        {/* Form Inputs section */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1 font-medium">From</label>
+            <input 
+              type="date" 
+              required
+              value={startDate}
+              className="w-full bg-background border border-input p-3 rounded-xl text-foreground text-sm focus:border-primary outline-none cursor-pointer"
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">Request Vacation</h2>
-            <p className="text-sm text-muted-foreground">Submit your scheduled time off.</p>
+            <label className="text-xs text-muted-foreground block mb-1 font-medium">To</label>
+            <input 
+              type="date" 
+              required
+              min={startDate}
+              value={endDate}
+              className="w-full bg-background border border-input p-3 rounded-xl text-foreground text-sm focus:border-primary outline-none cursor-pointer"
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1 font-medium">Reason</label>
+            <textarea 
+              required
+              value={reason}
+              placeholder="e.g., Vacation trip..."
+              className="w-full bg-background border border-input p-3 rounded-xl text-foreground text-sm h-32 focus:border-primary outline-none resize-none"
+              onChange={(e) => setReason(e.target.value)}
+            />
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-        <div>
-          <label className="text-xs text-muted-foreground block mb-1">From</label>
-          <input 
-            type="date" 
-            required
-            value={startDate}
-            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm focus:border-primary outline-none cursor-pointer"
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground block mb-1">To</label>
-          <input 
-            type="date" 
-            required
-            min={startDate}
-            value={endDate}
-            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm focus:border-primary outline-none cursor-pointer"
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground block mb-1">Reason</label>
-          <textarea 
-            required
-            value={reason}
-            className="w-full bg-background border border-input p-2.5 rounded-lg text-foreground text-sm h-24 focus:border-primary outline-none resize-none"
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
+      {/* Submit Button */}
+      <div className="pt-2 pb-safe">
         <Button 
           type="submit" 
           disabled={loading}
-          className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 cursor-pointer h-10"
+          className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 cursor-pointer h-12 flex items-center justify-center gap-2 rounded-xl shadow-lg text-sm"
         >
-          {loading ? "Submitting..." : "Submit Request"}
+          {loading ? <Loader2 className="animate-spin" size={18} /> : "Submit Request"}
         </Button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

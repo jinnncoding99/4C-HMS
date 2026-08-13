@@ -173,9 +173,10 @@ export default function PaymentModal({
 
       // 3. Database operations check
       if (isDirectSettlement) {
-        // Insert into history log first
+        // Insert into history log first with source_type: 'other' to show under Other Transactions
         const { error: historyError } = await supabase.from('transaction_history').insert([{
-          source_type: 'bill',
+          source_type: 'other',
+          type: paymentMethod,
           original_bill_id: bill.id,
           description: bill.description,
           total_amount: bill.total_amount ?? bill.amount ?? parsedAmount,
@@ -192,9 +193,6 @@ export default function PaymentModal({
           console.error("Failed to write to transaction_history:", JSON.stringify(historyError, null, 2));
         }
 
-        // Delete the master bill record completely from the database. 
-        // Note: If you have foreign key cascading turned on in Supabase for bill_shares, 
-        // deleting the parent bill will automatically clean up associated bill_shares.
         const { error: deleteBillError } = await supabase
           .from('bills')
           .delete()
@@ -219,7 +217,7 @@ export default function PaymentModal({
             amount: parsedAmount,
             method: paymentMethod,
             receipt_url: receiptUrl,
-            source_type: 'bill'
+            source_type: 'other'
           }
         };
 

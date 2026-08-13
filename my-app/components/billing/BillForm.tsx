@@ -107,7 +107,7 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMembers.length === 0) {
-      alert("Please select at least one member to share this bill.");
+      console.warn("[Validation Warning]: Please select at least one member to share this bill.");
       return;
     }
 
@@ -295,13 +295,52 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
         if (sharesError) throw sharesError;
       }
 
+      // --- INSTANT DEDUPLICATED NOTIFICATION TRIGGER ---
+      if (selectedMembers.length > 0 && billId) {
+        await supabase
+          .from('notifications')
+          .delete()
+          .eq('type', 'bill_announcement')
+          .eq('details->>bill_id', billId);
+
+        const selectedProfiles = profiles.filter((p) =>
+          selectedMembers.includes(p.id)
+        );
+
+        const uniqueMap = new Map<string, Profile>();
+        selectedProfiles.forEach((p) => {
+          if (p.email && !uniqueMap.has(p.email)) {
+            uniqueMap.set(p.email, p);
+          }
+        });
+
+        const notificationsPayload = Array.from(uniqueMap.values()).map((profile) => ({
+          type: 'bill_announcement',
+          email: profile.email,
+          message: `A new bill has been posted: "${formData.description}" amounting to ₱${totalAmountNum.toFixed(2)}.`,
+          status: 'sent',
+          details: { bill_id: billId, user_id: profile.id },
+        }));
+
+        if (notificationsPayload.length > 0) {
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert(notificationsPayload);
+
+          if (notifError) {
+            console.error("Failed to send bill notifications:", notifError.message);
+          }
+        }
+      }
+      // -----------------------------------------------
+
       window.dispatchEvent(new Event('billing-updated'));
+      window.dispatchEvent(new Event('notification-updated'));
       router.refresh();
       onSuccess();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error("Error saving bill:", errorMessage);
-      alert("Failed to save bill: " + errorMessage);
     } finally {
       setLoading(false);
     }

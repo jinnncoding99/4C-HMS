@@ -140,7 +140,7 @@ export default function ExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedMembers.length === 0) {
-      alert("Please select at least one member to share this expense.");
+      console.warn("[Validation Line ~145]: Please select at least one member to share this expense.");
       return;
     }
 
@@ -249,13 +249,53 @@ export default function ExpenseForm({
         if (sharesError) throw sharesError;
       }
 
+      // --- INSTANT DEDUPLICATED NOTIFICATION TRIGGER (Lines ~215-255) ---
+      if (selectedMembers.length > 0 && expenseId) {
+        await supabase
+          .from('notifications')
+          .delete()
+          .eq('type', 'expense_announcement')
+          .eq('details->>expense_id', expenseId);
+
+        // Only participants included in selectedMembers receive notifications
+        const selectedProfiles = profiles.filter(
+          (p) => selectedMembers.includes(p.id)
+        );
+
+        const uniqueMap = new Map<string, Profile>();
+        selectedProfiles.forEach((p) => {
+          if (p.email && !uniqueMap.has(p.email)) {
+            uniqueMap.set(p.email, p);
+          }
+        });
+
+        const notificationsPayload = Array.from(uniqueMap.values()).map((profile) => ({
+          type: 'expense_announcement',
+          email: profile.email,
+          message: `A new expense has been posted: "${formData.description}" amounting to ₱${totalAmountNum.toFixed(2)}.`,
+          status: 'sent',
+          details: { expense_id: expenseId, user_id: profile.id },
+        }));
+
+        if (notificationsPayload.length > 0) {
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert(notificationsPayload);
+
+          if (notifError) {
+            console.error("[Debug - Notification Insert Error at Line ~250]:", notifError.message);
+          }
+        }
+      }
+      // -----------------------------------------------------------------
+
       window.dispatchEvent(new Event('expense-updated'));
+      window.dispatchEvent(new Event('notification-updated'));
       router.refresh();
       onSuccess();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error("Error saving expense:", errorMessage);
-      alert("Failed to save expense: " + errorMessage);
+      console.error("[Debug - Error saving expense around Line ~270]:", errorMessage);
     } finally {
       setLoading(false);
     }

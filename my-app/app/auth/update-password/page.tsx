@@ -1,0 +1,126 @@
+'use client';
+
+import { updatePassword } from "@/app/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Loader2, Building2, Sun, Moon, CheckCircle2 } from "lucide-react";
+import { useTheme } from "next-themes";
+
+export default function UpdatePasswordPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const result = await updatePassword(formData);
+
+    if (result === "success") {
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
+    } else {
+      setError(result);
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="flex flex-col justify-center items-center min-h-screen bg-[#F0F2F5] dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
+      {/* Theme Toggle Button in Top Corner */}
+      <div className="absolute top-6 right-6 z-20">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="rounded-full border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[#4B49AC] dark:text-zinc-200 shadow-sm hover:bg-[#F0F2F5]"
+        >
+          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
+
+      {/* Background ambient glow effect */}
+      <div className="absolute w-[500px] h-[500px] bg-[#7DA0FA]/15 dark:bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* App Logo & Branding Header */}
+      <div className="mb-6 text-center z-10 flex flex-col items-center">
+        <div className="w-12 h-12 rounded-xl bg-[#4B49AC]/10 dark:bg-orange-600/20 border border-[#98BDFF] dark:border-orange-500/30 flex items-center justify-center text-[#4B49AC] dark:text-orange-500 mb-3 shadow-md">
+          <Building2 className="w-6 h-6" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Brd 4C Management System</h1>
+        <p className="text-sm text-slate-600 dark:text-zinc-400 mt-1">Secure password update</p>
+      </div>
+
+      <Card className="w-full max-w-md border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-xl shadow-xl z-10">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-xl text-slate-900 dark:text-white font-semibold">
+            Set New Password
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-zinc-400">
+            Please enter your new password below
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {success ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+              <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                Password updated successfully!
+              </p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                Redirecting to your dashboard...
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">New Password</Label>
+                <Input
+                  type="password"
+                  name="password"
+                  required
+                  placeholder="••••••••"
+                  className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500"
+                />
+              </div>
+
+              {error && (
+                <p className="text-xs text-red-600 dark:text-red-400 font-medium text-center">
+                  {error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-orange-600 dark:hover:bg-orange-600/90 text-white font-medium mt-2 transition-all shadow-md shadow-[#4B49AC]/20 dark:shadow-orange-600/20"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Password"
+                )}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

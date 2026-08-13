@@ -50,3 +50,36 @@ export async function signUp(formData: FormData) {
 
   return "success";
 }
+
+export async function forgotPassword(formData: FormData) {
+  const email = formData.get("email") as string;
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+  });
+
+  if (error) {
+    console.error("Password reset failed:", error.message);
+    return error.message;
+  }
+
+  return "success";
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = formData.get("password") as string;
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.updateUser({
+    password: password,
+  });
+
+  if (error) {
+    console.error("Password update failed:", error.message);
+    return error.message;
+  }
+
+  revalidatePath("/", "layout");
+  return "success";
+}

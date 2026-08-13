@@ -10,6 +10,7 @@ import { validateReceiptImage } from "./receiptValidator";
 interface TransactionHistoryItem {
   id: string;
   original_bill_id?: string;
+  original_expense_id?: string;
   description: string;
   total_amount: number;
   billing_period_start?: string | null;
@@ -20,7 +21,7 @@ interface TransactionHistoryItem {
   payment_receiver_id?: string | null;
   payer_id?: string | null;
   url_receipt?: string | null;
-  source_type: 'bill' | 'expense' | 'standard_payment';
+  source_type: 'bill' | 'expense' | 'expense_approval' | 'bill_approval' | 'standard_payment' | 'other';
 }
 
 interface HistoryTabProps {
@@ -39,8 +40,8 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
-  // Filter States - Added 'standard_payment' option
-  const [filterType, setFilterType] = useState<'all' | 'bill' | 'expense' | 'standard_payment'>('all');
+  // Filter States: 'all' | 'bill' | 'expense' | 'other'
+  const [filterType, setFilterType] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -77,43 +78,19 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
         setCurrentUserName(userName);
       }
 
-      // Fetch transaction_history (Bills & Settled Transactions)
+      // Fetch transaction_history records
       const { data: txData, error: txError } = await supabase
         .from("transaction_history")
         .select("*");
       
       if (txError) throw txError;
 
-      // Fetch standard payments table
-      const { data: paymentData, error: paymentError } = await supabase
-        .from("standard_payments") 
-        .select("*");
-
-      if (paymentError) {
-        console.warn("Could not fetch from standard_payments table:", paymentError.message);
-      }
-
-      const formattedBills: TransactionHistoryItem[] = (txData || []).map((item) => ({
+      const formattedHistoryItems: TransactionHistoryItem[] = (txData || []).map((item) => ({
         ...item,
-        source_type: item.source_type || 'bill',
+        source_type: item.source_type || 'bill', 
       }));
 
-      const formattedPayments: TransactionHistoryItem[] = (paymentData || []).map((item) => ({
-        id: item.id,
-        description: item.description || item.title || 'Standard Payment',
-        total_amount: Number(item.amount || item.total_amount || 0),
-        settled_at: item.settled_at || item.approved_at || item.created_at || item.date,
-        billing_period_start: item.billing_period_start || null,
-        billing_period_end: item.billing_period_end || null,
-        payment_receiver: item.payment_receiver || item.receiver_name || item.paid_to || 'N/A',
-        payment_receiver_id: item.payment_receiver_id || item.receiver_id || null,
-        payer_id: item.payer_id || item.approved_by_id || null,
-        url_receipt: item.url_receipt || item.receipt_url || null,
-        calculation_type: item.calculation_type || 'standard_payment',
-        source_type: 'standard_payment' as const,
-      }));
-
-      const combined = [...formattedBills, ...formattedPayments].sort((a, b) => {
+      const combined = formattedHistoryItems.sort((a, b) => {
         const dateA = new Date(a.settled_at || 0).getTime();
         const dateB = new Date(b.settled_at || 0).getTime();
         return dateB - dateA;
@@ -172,9 +149,18 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
     return true;
   };
 
+  // Maps source types to categories: 'bill' (includes bill & bill_approval), 'expense' (includes expense & expense_approval), 'other' (everything else, including standard_payment)
+  const getCategoryType = (sourceType: string): 'bill' | 'expense' | 'other' => {
+    const s = sourceType.toLowerCase();
+    if (s === 'bill' || s === 'bill_approval') return 'bill';
+    if (s === 'expense' || s === 'expense_approval') return 'expense';
+    return 'other';
+  };
+
   const filteredTransactions = transactionHistory.filter(tx => {
     const matchesPrivacy = canViewTransaction(tx);
-    const matchesType = filterType === 'all' || tx.source_type === filterType;
+    const itemCategory = getCategoryType(tx.source_type);
+    const matchesType = filterType === 'all' || itemCategory === filterType;
     const matchesDate = filterByDate(tx.settled_at || tx.billing_period_start);
     return matchesPrivacy && matchesType && matchesDate;
   });
@@ -247,12 +233,8 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
         .getPublicUrl(filePath);
       const newUrl = publicURLData.publicUrl;
 
-      let targetTable = 'transaction_history';
-      if (selectedTx.source_type === 'expense') targetTable = 'expenses';
-      if (selectedTx.source_type === 'standard_payment') targetTable = 'standard_payments';
-
       const { error: updateError } = await supabase
-        .from(targetTable)
+        .from('transaction_history')
         .update({ url_receipt: newUrl })
         .eq('id', selectedTx.id);
 
@@ -262,8 +244,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
       setNewReceiptFile(null);
       setViewingReceipt(false);
       
-      const updatedTx = { ...selectedTx, url_receipt: newUrl };
-      setSelectedTx(updatedTx);
+      setSelectedTx({ ...selectedTx, url_receipt: newUrl });
       await fetchCurrentUserAndHistory();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -322,6 +303,17 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
     return false;
   };
 
+  const formatSourceTypeLabel = (type: string) => {
+    switch(type) {
+      case 'expense_approval': return 'Expense Approval';
+      case 'bill_approval': return 'Bill Approval';
+      case 'expense': return 'Expense';
+      case 'bill': return 'Bill';
+      case 'standard_payment': return 'Standard Payment';
+      default: return type.replace('_', ' ');
+    }
+  };
+
   return (
     <div className="w-full space-y-4 text-foreground relative">
       {/* Header section */}
@@ -351,7 +343,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             </div>
             <div className="space-y-0.5">
               <h3 className="text-xl font-bold">Bill & Expense History</h3>
-              <p className="text-sm text-muted-foreground">Review fully approved and settled records, expenses, and transaction logs.</p>
+              <p className="text-sm text-muted-foreground">Review fully approved and settled records, approvals, and transaction logs.</p>
             </div>
           </div>
           
@@ -372,7 +364,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
+      {/* Filter Toolbar with All, Bill, Expenses, Others */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
         <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border w-full lg:w-auto justify-center">
           <button
@@ -389,7 +381,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
               filterType === 'bill' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Bills
+            Bill
           </button>
           <button
             onClick={() => setFilterType('expense')}
@@ -400,12 +392,12 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             Expenses
           </button>
           <button
-            onClick={() => setFilterType('standard_payment')}
+            onClick={() => setFilterType('other')}
             className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'standard_payment' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              filterType === 'other' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Other Transactions
+            Others
           </button>
         </div>
 
@@ -459,13 +451,13 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-foreground text-sm">{tx.description}</p>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                      tx.source_type === 'expense' 
+                      tx.source_type.includes('expense') 
                         ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' 
-                        : tx.source_type === 'standard_payment'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                        : tx.source_type.includes('bill')
+                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                     }`}>
-                      {tx.source_type === 'standard_payment' ? 'Standard Payment' : tx.source_type}
+                      {formatSourceTypeLabel(tx.source_type)}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
@@ -511,7 +503,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                 <div className="space-y-2.5 text-xs text-muted-foreground">
                   <div className="bg-muted p-3 rounded-lg border border-border space-y-1.5">
                     <p><span className="text-muted-foreground">Record ID:</span> {selectedTx.id}</p>
-                    <p><span className="text-muted-foreground">Type:</span> <span className="uppercase text-foreground font-medium">{selectedTx.source_type.replace('_', ' ')}</span></p>
+                    <p><span className="text-muted-foreground">Type:</span> <span className="uppercase text-foreground font-medium">{formatSourceTypeLabel(selectedTx.source_type)}</span></p>
                     <p><span className="text-muted-foreground">Description:</span> <span className="text-foreground font-medium">{selectedTx.description}</span></p>
                     <p><span className="text-muted-foreground">Payment Receiver:</span> <span className="text-foreground font-medium">{selectedTx.payment_receiver || 'N/A'}</span></p>
                     <p><span className="text-muted-foreground">Total Amount:</span> <span className="text-primary font-bold">₱{Number(selectedTx.total_amount || 0).toFixed(2)}</span></p>
