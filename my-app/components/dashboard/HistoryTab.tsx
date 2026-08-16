@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { History, FileText, Download, Calendar, ArrowLeft, X, Eye, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { History, FileText, Download, Calendar, ArrowLeft, X, Eye, CheckCircle2, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { validateReceiptImage } from "./receiptValidator";
 
 interface TransactionHistoryItem {
@@ -149,7 +149,6 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
     return true;
   };
 
-  // Maps source types to categories: 'bill' (includes bill & bill_approval), 'expense' (includes expense & expense_approval), 'other' (everything else, including standard_payment)
   const getCategoryType = (sourceType: string): 'bill' | 'expense' | 'other' => {
     const s = sourceType.toLowerCase();
     if (s === 'bill' || s === 'bill_approval') return 'bill';
@@ -316,117 +315,113 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
 
   return (
     <div className="w-full space-y-4 text-foreground relative">
-      {/* Header section */}
+      {/* Header section matching Vacation layout style */}
       <div className="flex flex-col border-b border-border pb-4 gap-4 relative">
         {onBack && (
-          <div className="flex justify-between items-center">
+          <div className="flex items-center w-full">
             <Button 
+              type="button"
               onClick={onBack}
               title="Return"
-              className="md:hidden bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0"
+              className="bg-muted border border-border hover:bg-accent text-muted-foreground hover:text-foreground h-10 w-10 p-0 flex items-center justify-center rounded-xl cursor-pointer shrink-0 shadow-sm"
             >
               <ArrowLeft size={18} />
             </Button>
-            <button 
-              onClick={onBack}
-              className="hidden md:flex ml-auto items-center gap-1.5 text-muted-foreground hover:text-foreground transition cursor-pointer text-xs font-bold bg-muted border border-border px-3 py-1.5 rounded-lg"
-            >
-              <X size={14} /> Close
-            </button>
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-center lg:text-left">
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+          <div className="flex items-center gap-3 w-full">
             <div className="p-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary shrink-0">
-              <History size={26} />
+              <History size={24} />
             </div>
-            <div className="space-y-0.5">
+            <div>
               <h3 className="text-xl font-bold">Bill & Expense History</h3>
               <p className="text-sm text-muted-foreground">Review fully approved and settled records, approvals, and transaction logs.</p>
             </div>
           </div>
-          
-          <div className="flex items-center justify-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0">
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button 
+              type="button"
               onClick={handleGenerateReport} 
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs cursor-pointer flex items-center gap-1.5 h-9"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs cursor-pointer flex items-center justify-center gap-1.5 h-10 px-4 flex-1 sm:flex-none"
             >
               <Download size={14} /> Generate Report
             </Button>
             <Button 
+              type="button"
               onClick={fetchCurrentUserAndHistory} 
-              className="bg-muted border border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer h-9"
+              title="Refresh Logs"
+              className="bg-muted border border-border text-foreground hover:bg-accent font-semibold text-xs cursor-pointer flex items-center justify-center gap-1.5 h-10 px-3 shrink-0"
             >
-              Refresh Logs
+              <RefreshCw size={14} /> Refresh
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Filter Toolbar with All, Bill, Expenses, Others */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
-        <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border w-full lg:w-auto justify-center">
-          <button
-            onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilterType('bill')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'bill' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Bill
-          </button>
-          <button
-            onClick={() => setFilterType('expense')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'expense' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Expenses
-          </button>
-          <button
-            onClick={() => setFilterType('other')}
-            className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer ${
-              filterType === 'other' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Others
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="text-muted-foreground flex items-center gap-1 font-medium">
-            <Calendar size={14} className="text-primary" /> Date:
-          </span>
+      {/* Date Range Selector Toolbar matching Vacation style */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border text-xs">
+        <span className="text-muted-foreground flex items-center gap-1 font-medium shrink-0">
+          <Calendar size={14} className="text-primary" /> Date Range Filter:
+        </span>
+        <div className="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
           <input 
             type="date" 
             value={startDate} 
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-muted border border-border text-foreground px-2 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none"
           />
           <span className="text-muted-foreground">to</span>
           <input 
             type="date" 
             value={endDate} 
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-muted border border-border text-foreground px-2 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer"
+            className="bg-muted border border-border text-foreground px-2.5 py-1.5 rounded-lg focus:border-primary outline-none cursor-pointer flex-1 sm:flex-none"
           />
           {(startDate || endDate) && (
             <button 
+              type="button"
               onClick={() => { setStartDate(''); setEndDate(''); }} 
-              className="text-primary hover:underline ml-2 cursor-pointer"
+              className="text-primary hover:underline ml-2 cursor-pointer font-medium shrink-0"
             >
               Clear
             </button>
           )}
         </div>
+      </div>
+
+      {/* Horizontal Short Filter Buttons (All, Bill, Expenses, Others) */}
+      <div className="flex items-center justify-start sm:justify-center gap-2 border-b border-border pb-4 overflow-x-auto scrollbar-none">
+        <Button 
+          type="button"
+          onClick={() => setFilterType('all')} 
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'all' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+        >
+          All
+        </Button>
+        <Button 
+          type="button"
+          onClick={() => setFilterType('bill')} 
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'bill' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+        >
+          Bill
+        </Button>
+        <Button 
+          type="button"
+          onClick={() => setFilterType('expense')} 
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'expense' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+        >
+          Expenses
+        </Button>
+        <Button 
+          type="button"
+          onClick={() => setFilterType('other')} 
+          className={`text-xs cursor-pointer px-4 h-8 shrink-0 ${filterType === 'other' ? 'bg-primary text-primary-foreground font-bold' : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-accent'}`}
+        >
+          Others
+        </Button>
       </div>
 
       {/* Content List */}
@@ -445,27 +440,28 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                   setValidationMessage("");
                   setViewingReceipt(false);
                 }}
-                className="bg-card p-4 rounded-lg border border-border hover:border-primary/50 transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs"
+                className="bg-card p-4 rounded-xl border border-border hover:border-primary/50 transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground text-sm">{tx.description}</p>
-                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${
                       tx.source_type.includes('expense') 
-                        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30' 
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/30' 
                         : tx.source_type.includes('bill')
-                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                     }`}>
                       {formatSourceTypeLabel(tx.source_type)}
                     </span>
+                    <p className="font-semibold text-foreground text-sm">{tx.description}</p>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     Receiver: <span className="text-foreground font-medium">{tx.payment_receiver || 'N/A'}</span> {tx.billing_period_start && `• Period: ${tx.billing_period_start} to ${tx.billing_period_end || 'N/A'}`}
                   </p>
                 </div>
-                <div className="text-left sm:text-right space-y-1 w-full sm:w-auto flex sm:block justify-between items-center">
-                  <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase inline-block">
+
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                  <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider">
                     Approved & Settled
                   </span>
                   <p className="font-bold text-primary text-sm">₱{Number(tx.total_amount).toFixed(2)}</p>
@@ -474,7 +470,10 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-12 text-xs italic">No approved records found visible to you matching this filter or date range.</p>
+          <div className="text-center py-12 space-y-2">
+            <FileText className="mx-auto text-muted-foreground opacity-40" size={36} />
+            <p className="text-muted-foreground text-xs italic">No approved records found visible to you matching this filter or date range.</p>
+          </div>
         )}
       </div>
 
@@ -488,6 +487,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
                 {viewingReceipt ? "View Receipt Image" : "Record Details"}
               </h4>
               <button 
+                type="button"
                 onClick={() => {
                   setSelectedTx(null);
                   setViewingReceipt(false);
@@ -531,6 +531,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
 
                 <div className="flex justify-end pt-2">
                   <Button 
+                    type="button"
                     onClick={() => setSelectedTx(null)}
                     className="bg-muted border border-border text-foreground hover:bg-accent text-xs h-8 cursor-pointer"
                   >
@@ -542,6 +543,7 @@ export default function HistoryTab({ onBack }: HistoryTabProps) {
               <div className="space-y-4 text-xs">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <button 
+                    type="button"
                     onClick={() => setViewingReceipt(false)}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer bg-muted border border-border px-2.5 py-1.5 rounded-lg font-medium"
                   >

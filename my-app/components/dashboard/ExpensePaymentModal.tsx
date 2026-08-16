@@ -190,8 +190,6 @@ export default function ExpensePaymentModal({
         }
 
         // Delete the master expense record completely from the database.
-        // Note: If foreign key cascading is enabled in Supabase for expense_shares, 
-        // deleting the parent expense will automatically clean up its child shares rows.
         const { error: deleteExpenseError } = await supabase
           .from('expenses')
           .delete()
@@ -216,7 +214,7 @@ export default function ExpensePaymentModal({
             amount: parsedAmount,
             method: paymentMethod,
             receipt_url: receiptUrl,
-            type: 'expense'
+            source_type: 'expense_approval' // Updated here to expense_approval
           }
         };
 

@@ -1,3 +1,4 @@
+// components/billing/PendingApprovals.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -14,6 +15,7 @@ interface PaymentDetails {
   amount: string;
   method: string;
   receipt_url?: string | null;
+  source_type?: string;
 }
 
 interface NotificationItem {
@@ -61,7 +63,7 @@ export default function PendingApprovals() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [supabase]);
 
   const handleApproval = async (notification: NotificationItem, approved: boolean) => {
     const details = notification.details;
@@ -76,10 +78,10 @@ export default function PendingApprovals() {
     const idColumn = isBill ? "bill_id" : "expense_id";
 
     try {
-      const paidAmountNum = Number(details.amount) || 0;
+      const submittedAmount = Number(details.amount) || 0;
 
       if (approved) {
-        // 1. Fetch the current share of the payer
+        // 1. Fetch the current share record securely
         const { data: payerShare, error: payerShareError } = await supabase
           .from(targetTable)
           .select("*")
@@ -87,19 +89,25 @@ export default function PendingApprovals() {
           .eq("boarder_id", details.user_id)
           .single();
 
-        if (payerShareError || !payerShare) throw new Error(`Could not find payer's ${isBill ? 'bill' : 'expense'} share record.`);
+        if (payerShareError || !payerShare) {
+          throw new Error(`Could not find payer's ${isBill ? 'bill' : 'expense'} share record.`);
+        }
 
-        // Calculate new remaining share due
-        const currentShareDue = Number(payerShare.shared_amount || payerShare.amount || 0);
-        const newShareDue = Math.max(0, currentShareDue - paidAmountNum);
-        const isNowFullyPaid = newShareDue <= 0;
+        // 2. Safely compute the share credit capped against actual share amount due
+        const totalShareAmount = Number(payerShare.shared_amount || payerShare.amount || 0);
+        const existingPaidAmount = Number(payerShare.paid_amount || 0);
+        
+        const amountToCreditToShare = Math.min(submittedAmount, totalShareAmount - existingPaidAmount);
+        const totalPaidSoFar = existingPaidAmount + amountToCreditToShare;
+        
+        const remainingBalance = totalShareAmount - totalPaidSoFar;
+        const isNowFullyPaid = remainingBalance <= 0;
 
-        // 2. Update Payer's share record
         const updatePayload: Record<string, any> = {
-          shared_amount: newShareDue,
           is_paid: isNowFullyPaid,
           status: isNowFullyPaid ? 'paid' : 'partial',
-          paid_amount: (Number(payerShare.paid_amount || 0) + paidAmountNum)
+          paid_amount: totalPaidSoFar,
+          receipt_url: details.receipt_url || payerShare.receipt_url
         };
 
         const { error: updatePayerError } = await supabase
@@ -110,31 +118,38 @@ export default function PendingApprovals() {
 
         if (updatePayerError) throw updatePayerError;
 
-        // 3. Add the approved paid amount to the payment receiver's share balance if applicable
-        if (details.receiver_id) {
-          const { data: receiverShare, error: receiverShareError } = await supabase
-            .from(targetTable)
+        // 3. If it's a bill, fetch parent bill details and insert transaction history
+        if (isBill && targetId) {
+          const { data: billData } = await supabase
+            .from("bills")
             .select("*")
-            .eq(idColumn, targetId)
-            .eq("boarder_id", details.receiver_id)
+            .eq("id", targetId)
             .maybeSingle();
 
-          if (!receiverShareError && receiverShare) {
-            const receiverCurrentShare = Number(receiverShare.shared_amount || receiverShare.amount || 0);
-            const updatedReceiverShare = receiverCurrentShare + paidAmountNum;
+          const { error: historyError } = await supabase
+            .from("transaction_history")
+            .insert({
+              original_bill_id: targetId,
+              description: billData?.description || notification.message || "Approved Bill Payment",
+              total_amount: submittedAmount,
+              billing_period_start: billData?.billing_period_start || null,
+              billing_period_end: billData?.billing_period_end || null,
+              calculation_type: billData?.calculation_type || null,
+              settled_at: new Date().toISOString(),
+              url_receipt: details.receipt_url || null,
+              payment_receiver_id: billData?.payment_receiver_id || details.receiver_id || null,
+              payment_receiver: billData?.payment_receiver || null,
+              payer_id: details.user_id || null,
+              source_type: details.source_type || "approved_bill_payment"
+            });
 
-            await supabase
-              .from(targetTable)
-              .update({
-                shared_amount: updatedReceiverShare
-              })
-              .eq(idColumn, targetId)
-              .eq("boarder_id", details.receiver_id);
+          if (historyError) {
+            console.error("Failed to insert transaction history:", historyError);
+            throw historyError;
           }
         }
 
       } else {
-        // If rejected, revert status back to unpaid
         const { error: rejectError } = await supabase
           .from(targetTable)
           .update({
@@ -149,13 +164,15 @@ export default function PendingApprovals() {
         if (rejectError) throw rejectError;
       }
 
-      // 4. Update Notification Status
-      await supabase
+      // 4. Update Notification Status to 'approved' or 'rejected'
+      const { error: notifError } = await supabase
         .from("notifications")
         .update({ status: approved ? 'approved' : 'rejected' })
         .eq("id", notification.id);
 
-      alert(approved ? "Payment approved successfully! Balances updated." : "Payment rejected.");
+      if (notifError) throw notifError;
+
+      alert(approved ? "Payment approved successfully! Transaction recorded." : "Payment rejected.");
       fetchRequests();
       window.dispatchEvent(new Event(isBill ? 'billing-updated' : 'expense-updated'));
     } catch (err: unknown) {
@@ -175,7 +192,7 @@ export default function PendingApprovals() {
 
   return (
     <>
-      <Card className="w-full bg-[#1a1a1a] border border-[#ff8c00] text-white p-4 space-y-4">
+      <Card className="w-full bg-[#1a1a1a] border border-[#ff8c00] text-white p-4 space-y-4 shadow-xl">
         <h3 className="text-md font-bold text-[#ff8c00]">Pending Payment Approvals ({requests.length})</h3>
        
         <div className="space-y-3">
@@ -198,7 +215,7 @@ export default function PendingApprovals() {
                       href={req.details.receipt_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-gray-400 hover:text-white"
+                      className="inline-flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
                     >
                       <ExternalLink size={12} /> Open Full
                     </a>

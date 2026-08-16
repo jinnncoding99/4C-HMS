@@ -1,6 +1,7 @@
+// app/components/RoleListenerModal.tsx
 'use client';
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -74,15 +75,15 @@ export default function RoleListenerModal({ currentUserId }: { currentUserId: st
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#ff8c00] w-full max-w-md shadow-2xl text-center space-y-4">
-        <h2 className="text-xl font-bold text-white">Role Updated!</h2>
-        <p className="text-gray-300">
-          Your account role has been updated to <span className="text-[#ff8c00] font-semibold uppercase">{newRoleName}</span>. 
+      <div className="bg-card p-6 rounded-2xl border border-primary w-full max-w-md shadow-2xl text-center space-y-4 text-card-foreground">
+        <h2 className="text-xl font-bold text-foreground">Role Updated!</h2>
+        <p className="text-muted-foreground">
+          Your account role has been updated to <span className="text-primary font-semibold uppercase">{newRoleName}</span>. 
           Please click below to reload your dashboard.
         </p>
         <button
           onClick={handleRefreshAndApply}
-          className="w-full bg-[#ff8c00] hover:bg-[#e07b00] text-black font-bold py-3 rounded-xl transition shadow-lg cursor-pointer"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl transition shadow-lg cursor-pointer"
         >
           Refresh & Apply Changes
         </button>

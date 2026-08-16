@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FileText, Clock, Wallet, CheckCircle2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 import { UnifiedDashboardCard } from '@/components/dashboard/UnifiedDashboardCard';
 import { AddBillDialog, EditBillModal } from './BillModals';
@@ -33,6 +34,7 @@ export const BillSummary = ({
   fetchData: () => void;
   deleteBill: (id: string) => void;
 }) => {
+  const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedBills, setExpandedBills] = useState<Record<string, boolean>>({});
 
@@ -71,11 +73,31 @@ export const BillSummary = ({
     setIsDirectSettlement(true);
   };
 
+  // Handler to mark an entire bill as settled from the breakdown view
+  const handleMarkAsSettled = async (billId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .update({ status: 'settled', is_paid: true })
+        .eq('id', billId);
+
+      if (error) {
+        console.error('Error marking bill as settled:', error);
+        return;
+      }
+
+      window.dispatchEvent(new Event('billing-updated'));
+      if (fetchData) fetchData();
+    } catch (err) {
+      console.error('Unexpected error marking bill as settled:', err);
+    }
+  };
+
   const hasBills = Array.isArray(bills) && bills.length > 0;
 
   const displayBills = (!hasBills ? [] : bills).filter((bill: any) => {
     const breakdown = billSharesMap[bill.id] || [];
-    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
+    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.status === 'paid');
     const isBillPaid = bill.is_paid || bill.status === 'paid' || allSharesPaid;
     return !isBillPaid;
   });
@@ -88,19 +110,19 @@ export const BillSummary = ({
   const totalPendingCollection = !hasActiveBills ? 0 : displayBills.reduce((acc, bill) => {
     const breakdown = billSharesMap[bill.id] || [];
     const totalAmount = Number(bill.total_amount || bill.amount || 0);
-    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    const collected = breakdown.reduce((sum: number, b: any) => sum + (b.status === 'paid' ? Number(b.paid_amount || b.shared_amount || 0) : 0), 0);
     return acc + Math.max(0, totalAmount - collected);
   }, 0);
 
   const totalCollected = !hasActiveBills ? 0 : bills.reduce((acc, bill) => {
     const breakdown = billSharesMap[bill.id] || [];
-    const collected = breakdown.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || (b.isPaid ? b.shareDue : 0)), 0);
+    const collected = breakdown.reduce((sum: number, b: any) => sum + (b.status === 'paid' ? Number(b.paid_amount || b.shared_amount || 0) : 0), 0);
     return acc + collected;
   }, 0);
 
   const totalDue = !hasActiveBills ? 0 : bills.reduce((acc: number, bill: any) => {
     const breakdown = billSharesMap[bill.id] || [];
-    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.isPaid || b.status === 'paid');
+    const allSharesPaid = breakdown.length > 0 && breakdown.every((b: any) => b.status === 'paid');
     if (bill.is_paid || bill.status === 'paid' || allSharesPaid) return acc;
 
     const myBreakdown = breakdown.find((item: any) => item.id === activeUserId || item.boarder_id === activeUserId);
@@ -108,15 +130,14 @@ export const BillSummary = ({
     
     if (!myBreakdown) return acc;
 
-    const nonReceiverShares = breakdown.filter((b: any) => (b.id || b.boarder_id) !== bill.payment_receiver_id);
-    const totalCollectedFromOthers = nonReceiverShares.reduce((sum: number, b: any) => sum + Number(b.paidAmount || b.paid_amount || 0), 0);
-    const receiverBaseShare = Number(myBreakdown.shareDue ?? myBreakdown.shared_amount ?? 0);
+    const baseShare = Number(myBreakdown.shared_amount ?? myBreakdown.shareDue ?? 0);
+    const myPaidAmount = Number(myBreakdown.paid_amount ?? 0);
+    
+    // FIXED: Receiver's individual share due should simply track their personal share minus what they've paid, 
+    // without inflating their own share balance by adding other people's collected shares.
+    const userShareDue = Math.max(0, baseShare - myPaidAmount);
 
-    const userShareDue = isPaymentReceiver 
-      ? receiverBaseShare + totalCollectedFromOthers
-      : Math.max(0, receiverBaseShare - Number(myBreakdown.paidAmount || myBreakdown.paid_amount || 0));
-
-    const isMySharePaid = myBreakdown.isPaid || myBreakdown.is_paid || myBreakdown.status === 'paid';
+    const isMySharePaid = myBreakdown.status === 'paid' || (isPaymentReceiver ? false : userShareDue <= 0);
 
     return acc + (!isMySharePaid ? userShareDue : 0);
   }, 0);
@@ -138,14 +159,16 @@ export const BillSummary = ({
               </p>
             </div>
             
-            {isAdmin && (
-              <AddBillDialog 
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-                profiles={profiles}
-                onSuccess={fetchData}
-              />
-            )}
+            <div className="w-full sm:w-auto flex justify-end">
+              {isAdmin && (
+                <AddBillDialog 
+                  isOpen={isOpen}
+                  setIsOpen={setIsOpen}
+                  profiles={profiles}
+                  onSuccess={fetchData}
+                />
+              )}
+            </div>
           </div>
 
           {/* Top Summary Metric Cards */}
@@ -194,10 +217,15 @@ export const BillSummary = ({
                 const formattedBreakdown = rawBreakdown.map((b: any) => {
                   const targetUserId = b.boarder_id || b.user_id || b.id;
                   const matchedProfile = profiles.find((p: any) => p.id === targetUserId);
+                  
+                  const baseShare = Number(b.shared_amount ?? b.shareDue ?? 0);
+                  const paidVal = Number(b.paid_amount ?? 0);
+
                   return {
                     ...b,
-                    shareDue: b.shareDue ?? b.shared_amount ?? 0,
-                    isPaid: b.isPaid ?? b.is_paid ?? (b.status === 'paid'),
+                    shareDue: baseShare,
+                    paidAmount: paidVal,
+                    isPaid: b.status === 'paid',
                     username: b.username || matchedProfile?.username || 'Unknown Member',
                     name: b.name || matchedProfile?.username || 'Unknown Member',
                   };
@@ -216,10 +244,14 @@ export const BillSummary = ({
                     onPayNow={(b, amt) => handleOpenPayModal(b, amt)}
                     onSettleItem={(b) => {
                       const myShare = formattedBreakdown.find((item: any) => item.boarder_id === activeUserId || item.id === activeUserId);
-                      handleOpenSettleModal(b, Number(myShare?.shareDue || b.amount || 0));
+                      const baseShareAmt = Number(myShare?.shareDue || b.amount || 0);
+                      const paidAmt = Number(myShare?.paidAmount || 0);
+                      handleOpenSettleModal(b, Math.max(0, baseShareAmt - paidAmt));
                     }}
                     onEditItem={(b) => setEditingBill(b)}
                     onDeleteItem={deleteBill}
+                    onMarkAsSettled={() => handleMarkAsSettled(bill.id)}
+                    isBillSettled={bill.is_paid || bill.status === 'settled'}
                     userPaymentRequests={userPaymentRequests}
                     type="bill"
                   />

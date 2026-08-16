@@ -10,9 +10,10 @@ import { motion, AnimatePresence } from "framer-motion";
 interface UserManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userRole?: string;
 }
 
-export default function UserManagementModal({ isOpen = false, onClose }: UserManagementModalProps) {
+export default function UserManagementModal({ isOpen = false, onClose, userRole = "Boarder" }: UserManagementModalProps) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoadState] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
   const [userToDelete, setUserToDelete] = useState<{ id: string; username: string } | null>(null);
 
   const supabase = createClient();
+  const isAdmin = userRole.toLowerCase() === 'admin';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -48,7 +50,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
   };
 
   const executeRoleUpdate = async () => {
-    if (!userToModify) return;
+    if (!isAdmin || !userToModify) return;
     const { id: userId, role: currentRole } = userToModify;
     const normalizedCurrent = currentRole?.toLowerCase();
     const newRole = (normalizedCurrent === 'admin') ? 'user' : 'admin';
@@ -72,7 +74,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
   };
 
   const executeUserDelete = async () => {
-    if (!userToDelete) return;
+    if (!isAdmin || !userToDelete) return;
     const { id: userId, username } = userToDelete;
 
     setLoadState(userId);
@@ -100,13 +102,13 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch = user.username?.toLowerCase().includes(searchQuery.toLowerCase());
-    const userRole = user.role?.toLowerCase() || '';
+    const uRole = user.role?.toLowerCase() || '';
     
     let matchesRole = true;
     if (roleFilter === 'admin') {
-      matchesRole = userRole === 'admin';
+      matchesRole = uRole === 'admin';
     } else if (roleFilter === 'boarder') {
-      matchesRole = userRole === 'boarder' || userRole === 'user';
+      matchesRole = uRole === 'boarder' || uRole === 'user';
     }
 
     return matchesSearch && matchesRole;
@@ -127,7 +129,9 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 shrink-0">
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">User Management</h2>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">Manage permissions, roles, and profiles across your space.</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+              {isAdmin ? "Manage permissions, roles, and profiles across your space." : "View active system members and roles."}
+            </p>
           </div>
           <button 
             onClick={onClose}
@@ -243,7 +247,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
               <AnimatePresence>
                 {filteredUsers.map((user) => {
                   const userRoleLower = user.role?.toLowerCase() || '';
-                  const isAdmin = userRoleLower === 'admin';
+                  const isUserAdmin = userRoleLower === 'admin';
                   return (
                     <motion.div 
                       key={user.id}
@@ -276,43 +280,45 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
                             )}
                           </h4>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 ${
-                            isAdmin 
+                            isUserAdmin 
                               ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
                               : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
                           }`}>
-                            {isAdmin ? <Shield size={10} /> : <UserIcon size={10} />}
-                            {isAdmin ? 'Admin' : 'Boarder'}
+                            {isUserAdmin ? <Shield size={10} /> : <UserIcon size={10} />}
+                            {isUserAdmin ? 'Admin' : 'Boarder'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Actions Footer */}
-                      <div className={`flex items-center gap-2 ${
-                        viewMode === 'grid' 
-                          ? 'w-full pt-4 border-t border-slate-100 dark:border-zinc-800 flex-row justify-center' 
-                          : 'shrink-0'
-                      }`}>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className={`text-xs border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold cursor-pointer h-8 shadow-none ${viewMode === 'grid' ? 'flex-1 px-0' : 'px-3'}`}
-                          disabled={loading === user.id}
-                          onClick={() => setUserToModify({ id: user.id, role: user.role, username: user.username })}
-                        >
-                          {loading === user.id ? "..." : isAdmin ? 'Demote' : 'Promote'}
-                        </Button>
+                      {/* Actions Footer - Only Rendered if Viewer is Admin */}
+                      {isAdmin && (
+                        <div className={`flex items-center gap-2 ${
+                          viewMode === 'grid' 
+                            ? 'w-full pt-4 border-t border-slate-100 dark:border-zinc-800 flex-row justify-center' 
+                            : 'shrink-0'
+                        }`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className={`text-xs border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold cursor-pointer h-8 shadow-none ${viewMode === 'grid' ? 'flex-1 px-0' : 'px-3'}`}
+                            disabled={loading === user.id}
+                            onClick={() => setUserToModify({ id: user.id, role: user.role, username: user.username })}
+                          >
+                            {loading === user.id ? "..." : isUserAdmin ? 'Demote' : 'Promote'}
+                          </Button>
 
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          disabled={loading === user.id}
-                          onClick={() => setUserToDelete({ id: user.id, username: user.username })}
-                          className="text-xs text-red-500 hover:bg-red-500/10 h-8 w-8 p-0 flex items-center justify-center shrink-0 cursor-pointer"
-                          title="Delete User"
-                        >
-                          <Trash2 size={15} />
-                        </Button>
-                      </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            disabled={loading === user.id}
+                            onClick={() => setUserToDelete({ id: user.id, username: user.username })}
+                            className="text-xs text-red-500 hover:bg-red-500/10 h-8 w-8 p-0 flex items-center justify-center shrink-0 cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 size={15} />
+                          </Button>
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -323,7 +329,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
       </div>
 
       {/* Confirmation Sub-Modal for Role Change */}
-      {userToModify && (
+      {isAdmin && userToModify && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
           <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-sm text-center shadow-2xl space-y-4">
             <ShieldAlert className="mx-auto text-[#4B49AC] dark:text-amber-500" size={40} />
@@ -346,7 +352,7 @@ export default function UserManagementModal({ isOpen = false, onClose }: UserMan
       )}
 
       {/* Confirmation Sub-Modal for User Deletion */}
-      {userToDelete && (
+      {isAdmin && userToDelete && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
           <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-red-500/40 w-full max-w-sm text-center shadow-2xl space-y-4">
             <Trash2 className="mx-auto text-red-500" size={40} />

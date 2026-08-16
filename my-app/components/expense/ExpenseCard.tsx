@@ -1,5 +1,5 @@
 // components/expense/ExpenseCard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
 import { ExpenseBreakdown } from './ExpenseBreakdown';
@@ -33,6 +33,8 @@ export const ExpenseCard = ({
   onDeleteExpense,
   userPaymentRequests,
 }: ExpenseCardProps) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const normalizedBreakdown = (breakdown || []).map((b) => ({
     ...b,
     id: b.id || b.boarder_id,
@@ -68,10 +70,10 @@ export const ExpenseCard = ({
     userPaymentRequests.some((req) => req.details?.expense_id === expense.id);
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors">
+    <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors relative">
       <div className="flex justify-between items-start">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-bold text-lg text-slate-900 dark:text-white">{expense.description || expense.title}</p>
             {allOthersPaid && (
               <span className="text-[10px] bg-emerald-500/10 dark:bg-green-500/20 border border-emerald-500 dark:border-green-500 text-emerald-600 dark:text-green-400 font-semibold px-2 py-0.5 rounded-full">
@@ -79,18 +81,18 @@ export const ExpenseCard = ({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-gray-400">
-            Expense Date: {expense.expense_date || expense.date || 'N/A'} • Type:{' '}
-            <span className="capitalize">{expense.calculation_type || 'split'}</span>
+          <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+            Expense Date: {expense.expense_date || expense.date || 'N/A'} • Category:{' '}
+            <span className="capitalize font-medium text-slate-700 dark:text-gray-300">{expense.category || 'Food'}</span>
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-slate-500 dark:text-gray-400">Total Expense Amount</p>
+        <div className="text-right shrink-0">
+          <p className="text-xs text-slate-500 dark:text-gray-400">Total Expense Amount</p>
           <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{totalExpenseAmount.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-[#222]">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-slate-100 dark:border-[#222]">
         <div>
           <p className="text-xs text-slate-500 dark:text-gray-400">Your Share Due:</p>
           <p className="text-md font-bold text-slate-900 dark:text-white">
@@ -120,7 +122,7 @@ export const ExpenseCard = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {isPaymentReceiver ? (
             isReceiverFullyAccumulated ? (
               <Button
@@ -171,7 +173,7 @@ export const ExpenseCard = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteExpense(expense.id);
+                      setShowDeleteConfirm(true);
                     }}
                     className="text-red-600 dark:text-red-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10"
                     title="Delete Expense"
@@ -185,6 +187,41 @@ export const ExpenseCard = ({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal / Inline Overlay */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-white/95 dark:bg-[#111111]/95 backdrop-blur-sm z-30 p-4 rounded-lg flex flex-col justify-center items-center text-center space-y-3 border border-red-500/30 animate-fadeIn">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            Are you sure you want to delete <span className="text-red-500">"{expense.description || expense.title}"</span>?
+          </p>
+          <p className="text-xs text-slate-500 dark:text-gray-400">
+            This action is irreversible and will remove all participant shares.
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                onDeleteExpense(expense.id);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-8 px-4 cursor-pointer"
+            >
+              Yes, Delete
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="border-slate-300 dark:border-[#333] text-slate-700 dark:text-gray-300 text-xs h-8 px-4 cursor-pointer"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="pt-2">
         <button

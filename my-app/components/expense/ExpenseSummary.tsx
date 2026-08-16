@@ -183,12 +183,14 @@ export default function ExpenseSummary({
               </p>
             </div>
             
-            <AddExpenseDialog 
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
-              profiles={profiles}
-              onSuccess={fetchData}
-            />
+            <div className="w-full sm:w-auto flex justify-end">
+              <AddExpenseDialog 
+                isOpen={isOpen}
+                setIsOpen={setIsOpen}
+                profiles={profiles}
+                onSuccess={fetchData}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

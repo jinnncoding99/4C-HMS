@@ -43,9 +43,13 @@ export default function PaymentModal({
   onSuccess 
 }: PaymentModalProps) {
   const safeShareDue = shareDue ?? 0;
+  const totalBillAmount = Number(bill.total_amount ?? bill.amount ?? safeShareDue);
+
+  // If it's direct settlement, the base max is the total bill due. Otherwise, it defaults to the individual share due.
+  const maxAllowedAmount = isDirectSettlement ? totalBillAmount : safeShareDue;
 
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online'>('online');
-  const [paymentAmount, setPaymentAmount] = useState<string>(safeShareDue.toFixed(2));
+  const [paymentAmount, setPaymentAmount] = useState<string>(maxAllowedAmount.toFixed(2));
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -122,8 +126,13 @@ export default function PaymentModal({
       return;
     }
 
-    if (parsedAmount > safeShareDue) {
-      toast.error("Payment amount cannot exceed your total share due.");
+    // Apply strict validation boundary depending on settlement type vs individual payment
+    if (parsedAmount > maxAllowedAmount) {
+      toast.error(
+        isDirectSettlement 
+          ? "Payment amount cannot exceed the total bill amount." 
+          : "Payment amount cannot exceed your share due."
+      );
       return;
     }
 
@@ -134,7 +143,6 @@ export default function PaymentModal({
 
     setSubmitting(true);
     try {
-      // 1. Auth check
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) console.error("Session error:", sessionError);
       
@@ -150,7 +158,6 @@ export default function PaymentModal({
 
       let receiptUrl: string | null = null;
 
-      // 2. Storage upload check
       if (paymentMethod === 'online' && receiptFile) {
         const fileExt = receiptFile.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
@@ -171,15 +178,12 @@ export default function PaymentModal({
         receiptUrl = publicURLData.publicUrl;
       }
 
-      // 3. Database operations check
       if (isDirectSettlement) {
-        // Insert into history log first with source_type: 'other' to show under Other Transactions
         const { error: historyError } = await supabase.from('transaction_history').insert([{
-          source_type: 'other',
-          type: paymentMethod,
+          source_type: 'Bill',
           original_bill_id: bill.id,
           description: bill.description,
-          total_amount: bill.total_amount ?? bill.amount ?? parsedAmount,
+          total_amount: parsedAmount,
           billing_period_start: bill.billing_period_start || null,
           billing_period_end: bill.billing_period_end || null,
           calculation_type: bill.calculation_type || null,
@@ -191,6 +195,7 @@ export default function PaymentModal({
 
         if (historyError) {
           console.error("Failed to write to transaction_history:", JSON.stringify(historyError, null, 2));
+          throw new Error(`Transaction history insert failed: ${historyError.message}`);
         }
 
         const { error: deleteBillError } = await supabase
@@ -217,7 +222,7 @@ export default function PaymentModal({
             amount: parsedAmount,
             method: paymentMethod,
             receipt_url: receiptUrl,
-            source_type: 'other'
+            source_type: 'approved_bill_payment'
           }
         };
 
@@ -232,7 +237,7 @@ export default function PaymentModal({
           .update({ 
             status: 'pending_approval',
             payment_method: paymentMethod,
-            paid_amount: parsedAmount,
+            paid_amount: 0, 
             receipt_url: receiptUrl
           })
           .eq('bill_id', bill.id)
@@ -293,20 +298,31 @@ export default function PaymentModal({
           )}
         </div>
 
-        {/* Editable Amount Field for Partial Payments / Full Settlement */}
+        {/* Dynamic Amount Label & Limit based on isDirectSettlement */}
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs text-slate-500 dark:text-zinc-400 font-medium">
             <span>Payment Amount (₱)</span>
-            <span>Max Due: ₱{safeShareDue.toFixed(2)}</span>
+            <span>
+              {isDirectSettlement 
+                ? `Total Bill Due: ₱${totalBillAmount.toFixed(2)}` 
+                : `Your Share Due: ₱${safeShareDue.toFixed(2)}`}
+            </span>
           </div>
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-slate-400 font-bold">₱</span>
             <input 
               type="number"
               step="0.01"
-              max={safeShareDue}
+              max={maxAllowedAmount}
               value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setPaymentAmount(val);
+                if (paymentMethod === 'online' && receiptFile) {
+                  setIsReceiptValid(false);
+                  setValidationMessage("Amount changed. Please re-upload or re-verify receipt.");
+                }
+              }}
               className="w-full pl-7 pr-3 py-2 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-[#4B49AC] dark:focus:ring-amber-500"
             />
           </div>
