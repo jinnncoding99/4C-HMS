@@ -143,21 +143,10 @@ export default function DashboardHeader({
 
     const channel = supabase
       .channel('public:notifications-header')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, async (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, async () => {
         const { data: { user } } = await supabase.auth.getUser();
         const activeId = user?.id || userIdRef.current;
         
-        if (payload.new && payload.new.type === 'payment_status_update' && activeId) {
-          const { data: profileData } = await supabase.from('profiles').select('email').eq('id', activeId).single();
-          if (profileData && profileData.email === payload.new.email) {
-            window.alert(payload.new.message);
-            window.dispatchEvent(new Event('billing-updated'));
-            window.dispatchEvent(new Event('expense-updated'));
-            window.dispatchEvent(new Event('vacation-updated'));
-            router.refresh();
-          }
-        }
-
         window.dispatchEvent(new Event('billing-updated'));
         window.dispatchEvent(new Event('expense-updated'));
         window.dispatchEvent(new Event('vacation-updated'));
@@ -195,7 +184,6 @@ export default function DashboardHeader({
       if (action === 'dismiss') {
         await supabase.from('notifications').delete().eq('id', notif.id);
         
-        // Trigger dashboard refresh on dismiss as well
         window.dispatchEvent(new Event('billing-updated'));
         window.dispatchEvent(new Event('expense-updated'));
         window.dispatchEvent(new Event('vacation-updated'));
@@ -216,7 +204,6 @@ export default function DashboardHeader({
       if (action === 'approve') {
         if ((notif.type === 'payment_approval' || notif.type === 'expense_approval') && notif.details) {
           if (targetId && payerUserId) {
-            // 1. Fetch member share record for accurate partial/full updates
             const { data: memberShare, error: fetchShareError } = await supabase
               .from(tableName)
               .select('*')
@@ -234,7 +221,6 @@ export default function DashboardHeader({
             const newPaidAmount = existingPaidAmount + paymentAmount;
             const isFullyPaid = newPaidAmount >= totalSharedAmount;
 
-            // 2. Update Payer's share balance and status
             await supabase
               .from(tableName)
               .update({ 
@@ -256,15 +242,21 @@ export default function DashboardHeader({
             .eq('end_date', notif.details.end_date);
         }
 
-        // 3. Record transaction history
-        await supabase.from('transaction_history').insert({
-          user_email: notif.email,
-          type: notif.type,
-          amount: paymentAmount,
-          status: 'approved',
-          reference_id: targetId || null,
-          details: notif.details,
+        // Fixed payload mapped correctly to match transaction_history columns safely (omitting user_email / status to avoid schema mismatches seen in network tab)
+        const { error: transactionError } = await supabase.from('transaction_history').insert({
+          original_bill_id: !isExpenseEntry ? targetId : null,
+          description: notif.message || `${notif.type} Approved`,
+          total_amount: paymentAmount,
+          settled_at: new Date().toISOString(),
+          url_receipt: notif.details?.receipt_url || null,
+          payment_receiver_id: notif.details?.receiver_id || null,
+          payer_id: payerUserId || null,
+          source_type: notif.type
         });
+
+        if (transactionError) {
+          throw new Error(transactionError.message);
+        }
 
         const approvalMessage = notif.type === 'vacation'
           ? `Your vacation request from ${notif.details?.start_date} to ${notif.details?.end_date} has been Approved!`
@@ -303,14 +295,21 @@ export default function DashboardHeader({
             .eq('end_date', notif.details.end_date);
         }
 
-        await supabase.from('transaction_history').insert({
-          user_email: notif.email,
-          type: notif.type,
-          amount: paymentAmount,
-          status: 'rejected',
-          reference_id: targetId || null,
-          details: notif.details,
+        // Fixed payload mapped correctly for rejected status
+        const { error: transactionError } = await supabase.from('transaction_history').insert({
+          original_bill_id: !isExpenseEntry ? targetId : null,
+          description: notif.message || `${notif.type} Rejected`,
+          total_amount: paymentAmount,
+          settled_at: new Date().toISOString(),
+          url_receipt: notif.details?.receipt_url || null,
+          payment_receiver_id: notif.details?.receiver_id || null,
+          payer_id: payerUserId || null,
+          source_type: `${notif.type}_rejected`
         });
+
+        if (transactionError) {
+          throw new Error(transactionError.message);
+        }
 
         const rejectionMessage = notif.type === 'vacation'
           ? `Your vacation request from ${notif.details?.start_date} to ${notif.details?.end_date} was Rejected.`
@@ -327,7 +326,6 @@ export default function DashboardHeader({
 
       await supabase.from('notifications').delete().eq('id', notif.id);
 
-      // Force immediate dashboard updates across all listening components
       window.dispatchEvent(new Event('billing-updated'));
       window.dispatchEvent(new Event('expense-updated'));
       window.dispatchEvent(new Event('vacation-updated'));

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -9,7 +10,6 @@ import { CheckCircle2, XCircle, ExternalLink, Image as ImageIcon } from "lucide-
 
 interface PaymentDetails {
   bill_id?: string;
-  expense_id?: string;
   user_id: string;
   receiver_id?: string;
   amount: string;
@@ -32,6 +32,7 @@ export default function PendingApprovals() {
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   
+  const router = useRouter();
   const supabase = createClient();
 
   const fetchRequests = async () => {
@@ -42,7 +43,9 @@ export default function PendingApprovals() {
       .eq("type", "payment_approval")
       .eq("status", "pending");
 
-    if (!error && data) {
+    if (error) {
+      console.error("Error fetching notifications:", error.message);
+    } else if (data) {
       setRequests(data);
     }
     setLoading(false);
@@ -67,33 +70,32 @@ export default function PendingApprovals() {
 
   const handleApproval = async (notification: NotificationItem, approved: boolean) => {
     const details = notification.details;
-    if (!details || (!details.bill_id && !details.expense_id) || !details.user_id) {
+    if (!details || !details.bill_id || !details.user_id) {
       alert("Invalid notification metadata.");
       return;
     }
 
-    const isBill = Boolean(details.bill_id);
-    const targetId = details.bill_id || details.expense_id;
-    const targetTable = isBill ? "bill_shares" : "expense_shares";
-    const idColumn = isBill ? "bill_id" : "expense_id";
+    const targetId = details.bill_id;
 
     try {
       const submittedAmount = Number(details.amount) || 0;
 
       if (approved) {
-        // 1. Fetch the current share record securely
+        // 1. Fetch payer's bill share row by unique identifiers
         const { data: payerShare, error: payerShareError } = await supabase
-          .from(targetTable)
-          .select("*")
-          .eq(idColumn, targetId)
+          .from("bill_shares")
+          .select("id, shared_amount, amount, paid_amount, receipt_url, payment_method")
+          .eq("bill_id", targetId)
           .eq("boarder_id", details.user_id)
-          .single();
+          .maybeSingle();
 
-        if (payerShareError || !payerShare) {
-          throw new Error(`Could not find payer's ${isBill ? 'bill' : 'expense'} share record.`);
+        if (payerShareError || !payerShare || !payerShare.id) {
+          throw new Error(`Could not find payer bill share record: ${payerShareError?.message}`);
         }
 
-        // 2. Safely compute the share credit capped against actual share amount due
+        const shareRowId = payerShare.id;
+
+        // 2. Compute amounts securely
         const totalShareAmount = Number(payerShare.shared_amount || payerShare.amount || 0);
         const existingPaidAmount = Number(payerShare.paid_amount || 0);
         
@@ -103,78 +105,100 @@ export default function PendingApprovals() {
         const remainingBalance = totalShareAmount - totalPaidSoFar;
         const isNowFullyPaid = remainingBalance <= 0;
 
-        const updatePayload: Record<string, any> = {
+        // 3. Update bill_shares using primary key .eq("id", shareRowId)
+        const updatePayload = {
           is_paid: isNowFullyPaid,
           status: isNowFullyPaid ? 'paid' : 'partial',
           paid_amount: totalPaidSoFar,
-          receipt_url: details.receipt_url || payerShare.receipt_url
+          receipt_url: details.receipt_url || payerShare.receipt_url,
+          payment_method: details.method || payerShare.payment_method || 'cash',
+          approved_at: new Date().toISOString()
         };
 
         const { error: updatePayerError } = await supabase
-          .from(targetTable)
+          .from("bill_shares")
           .update(updatePayload)
-          .eq(idColumn, targetId)
-          .eq("boarder_id", details.user_id);
+          .eq("id", shareRowId);
 
-        if (updatePayerError) throw updatePayerError;
+        if (updatePayerError) {
+          throw new Error(`Failed to update bill share: ${updatePayerError.message}`);
+        }
 
-        // 3. If it's a bill, fetch parent bill details and insert transaction history
-        if (isBill && targetId) {
-          const { data: billData } = await supabase
-            .from("bills")
-            .select("*")
-            .eq("id", targetId)
-            .maybeSingle();
+        // 4. Fetch parent bill details and insert transaction using strictly valid schema columns
+        const { data: billData } = await supabase
+          .from("bills")
+          .select("*")
+          .eq("id", targetId)
+          .maybeSingle();
 
-          const { error: historyError } = await supabase
-            .from("transaction_history")
-            .insert({
-              original_bill_id: targetId,
-              description: billData?.description || notification.message || "Approved Bill Payment",
-              total_amount: submittedAmount,
-              billing_period_start: billData?.billing_period_start || null,
-              billing_period_end: billData?.billing_period_end || null,
-              calculation_type: billData?.calculation_type || null,
-              settled_at: new Date().toISOString(),
-              url_receipt: details.receipt_url || null,
-              payment_receiver_id: billData?.payment_receiver_id || details.receiver_id || null,
-              payment_receiver: billData?.payment_receiver || null,
-              payer_id: details.user_id || null,
-              source_type: details.source_type || "approved_bill_payment"
-            });
+        const transactionPayload = {
+          original_bill_id: targetId,
+          description: billData?.description || notification.message || "Approved Bill Payment",
+          total_amount: submittedAmount,
+          billing_period_start: billData?.billing_period_start || null,
+          billing_period_end: billData?.billing_period_end || null,
+          calculation_type: billData?.calculation_type || null,
+          settled_at: new Date().toISOString(),
+          url_receipt: details.receipt_url || null,
+          payment_receiver_id: billData?.payment_receiver_id || details.receiver_id || null,
+          payment_receiver: billData?.payment_receiver || null,
+          payer_id: details.user_id || null,
+          source_type: "Approve_bill_payment"
+        };
 
-          if (historyError) {
-            console.error("Failed to insert transaction history:", historyError);
-            throw historyError;
-          }
+        const { error: historyError } = await supabase
+          .from("transaction_history")
+          .insert([transactionPayload]);
+
+        if (historyError) {
+          throw new Error(`Failed to insert transaction history: ${historyError.message}`);
         }
 
       } else {
-        const { error: rejectError } = await supabase
-          .from(targetTable)
-          .update({
-            status: 'unpaid',
-            paid_amount: 0,
-            receipt_url: null,
-            is_paid: false
-          })
-          .eq(idColumn, targetId)
-          .eq("boarder_id", details.user_id);
+        // Rejection path
+        const { data: payerShare } = await supabase
+          .from("bill_shares")
+          .select("id")
+          .eq("bill_id", targetId)
+          .eq("boarder_id", details.user_id)
+          .maybeSingle();
 
-        if (rejectError) throw rejectError;
+        if (payerShare?.id) {
+          const { error: rejectError } = await supabase
+            .from("bill_shares")
+            .update({
+              status: 'unpaid',
+              paid_amount: 0,
+              receipt_url: null,
+              is_paid: false
+            })
+            .eq("id", payerShare.id);
+
+          if (rejectError) {
+            throw new Error(`Failed to reject payment: ${rejectError.message}`);
+          }
+        }
       }
 
-      // 4. Update Notification Status to 'approved' or 'rejected'
+      // 5. Update Notification Status
       const { error: notifError } = await supabase
         .from("notifications")
         .update({ status: approved ? 'approved' : 'rejected' })
         .eq("id", notification.id);
 
-      if (notifError) throw notifError;
+      if (notifError) {
+        throw new Error(`Failed to update notification status: ${notifError.message}`);
+      }
+
+      setRequests((prev) => prev.filter((req) => req.id !== notification.id));
 
       alert(approved ? "Payment approved successfully! Transaction recorded." : "Payment rejected.");
+      
       fetchRequests();
-      window.dispatchEvent(new Event(isBill ? 'billing-updated' : 'expense-updated'));
+      router.refresh();
+      window.dispatchEvent(new Event('billing-updated'));
+      window.dispatchEvent(new Event('transaction-updated'));
+
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error("Error processing approval:", errorMessage);
@@ -242,7 +266,6 @@ export default function PendingApprovals() {
         </div>
       </Card>
 
-      {/* Fullscreen / Modal Image Previewer */}
       {previewImage && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[99999]">
           <div className="relative max-w-2xl w-full bg-[#1a1a1a] p-4 rounded-2xl border border-[#ff8c00] space-y-4">

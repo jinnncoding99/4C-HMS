@@ -1,7 +1,7 @@
 // components/billing/BillSummary.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FileText, Clock, Wallet, CheckCircle2 } from 'lucide-react';
@@ -55,6 +55,34 @@ export const BillSummary = ({
                         profiles.find((p: any) => p.role?.toLowerCase() === 'admin') ||
                         null;
 
+  // Listen to custom billing updates and database notification events to refresh data seamlessly
+  useEffect(() => {
+    const handleDataRefresh = () => {
+      if (fetchData) fetchData();
+    };
+
+    window.addEventListener('billing-updated', handleDataRefresh);
+    window.addEventListener('transaction-updated', handleDataRefresh);
+
+    // Set up Supabase realtime subscription for notifications to auto-refresh state on new entries/approvals
+    const channel = supabase
+      .channel('bill-summary-notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => {
+          if (fetchData) fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('billing-updated', handleDataRefresh);
+      window.removeEventListener('transaction-updated', handleDataRefresh);
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData, supabase]);
+
   const toggleExpand = (id: string) => {
     setExpandedBills((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -102,9 +130,7 @@ export const BillSummary = ({
     return !isBillPaid;
   });
 
-  // If there are no active display bills, reset collections and metrics to 0
-  const hasActiveBills = displayBills.length > 0;
-
+  const hasActiveBills = displayBills.length;
   const activeBillsCount = displayBills.length;
 
   const totalPendingCollection = !hasActiveBills ? 0 : displayBills.reduce((acc, bill) => {
@@ -133,10 +159,7 @@ export const BillSummary = ({
     const baseShare = Number(myBreakdown.shared_amount ?? myBreakdown.shareDue ?? 0);
     const myPaidAmount = Number(myBreakdown.paid_amount ?? 0);
     
-    // FIXED: Receiver's individual share due should simply track their personal share minus what they've paid, 
-    // without inflating their own share balance by adding other people's collected shares.
     const userShareDue = Math.max(0, baseShare - myPaidAmount);
-
     const isMySharePaid = myBreakdown.status === 'paid' || (isPaymentReceiver ? false : userShareDue <= 0);
 
     return acc + (!isMySharePaid ? userShareDue : 0);
@@ -267,7 +290,7 @@ export const BillSummary = ({
         </div>
       </Card>
 
-      {/* Re-integrated Payment Modal with isDirectSettlement mode */}
+      {/* Payment Modal */}
       {selectedBillForPay && (
         <PaymentModal
           bill={selectedBillForPay}

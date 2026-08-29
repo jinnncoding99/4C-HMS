@@ -191,7 +191,6 @@ export const BillCard = ({
         </div>
       </div>
 
-      {/* Delete Confirmation Modal / Inline Overlay */}
       {showDeleteConfirm && (
         <div className="absolute inset-0 bg-white/95 dark:bg-[#111111]/95 backdrop-blur-sm z-30 p-4 rounded-lg flex flex-col justify-center items-center text-center space-y-3 border border-red-500/30 animate-fadeIn">
           <p className="text-sm font-semibold text-slate-900 dark:text-white">

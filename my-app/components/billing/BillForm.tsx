@@ -434,7 +434,7 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
               type="submit" 
               className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer h-10"
             >
-              Next Step
+              Next
             </Button>
             {onCancel && (
               <Button 

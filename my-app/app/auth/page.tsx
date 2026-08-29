@@ -75,9 +75,11 @@ export default function AuthPage() {
 
   if (isPending) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-[#F0F2F5] dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
-        <div className="absolute w-[500px] h-[500px] bg-[#7DA0FA]/10 dark:bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <Card className="w-full max-w-md p-8 text-center border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-xl shadow-xl z-10">
+      <div className="relative flex justify-center items-center min-h-screen bg-cover bg-center px-4 overflow-hidden" style={{ backgroundImage: "url('/your-background-image.jpg')" }}>
+        {/* Dark overlay for mobile and desktop readability */}
+        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs" />
+        
+        <Card className="w-full max-w-md p-8 text-center border-slate-700/50 bg-white/95 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl z-10">
           <div className="mx-auto w-12 h-12 rounded-full bg-[#4B49AC]/10 dark:bg-orange-500/10 flex items-center justify-center mb-4 text-[#4B49AC] dark:text-orange-500">
             <Lock className="w-6 h-6" />
           </div>
@@ -91,14 +93,17 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen bg-[#F0F2F5] dark:bg-zinc-950 px-4 relative overflow-hidden transition-colors">
+    <div className="relative flex flex-col justify-center items-center min-h-screen bg-cover bg-center px-4 py-8 overflow-hidden transition-colors" style={{ backgroundImage: "url('/your-background-image.jpg')" }}>
+      {/* Dark overlay to ensure contrast on mobile and desktop screens */}
+      <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px]" />
+
       {/* Theme Toggle Button in Top Corner */}
       <div className="absolute top-6 right-6 z-20">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="rounded-full border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900 text-[#4B49AC] dark:text-zinc-200 shadow-sm hover:bg-[#F0F2F5]"
+          className="rounded-full border-white/20 bg-white/80 dark:bg-zinc-900/80 text-[#4B49AC] dark:text-zinc-200 shadow-lg hover:bg-white"
         >
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -106,19 +111,16 @@ export default function AuthPage() {
         </Button>
       </div>
 
-      {/* Background ambient glow effect */}
-      <div className="absolute w-[500px] h-[500px] bg-[#7DA0FA]/15 dark:bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
-
       {/* App Logo & Branding Header */}
       <div className="mb-6 text-center z-10 flex flex-col items-center">
-        <div className="w-12 h-12 rounded-xl bg-[#4B49AC]/10 dark:bg-orange-600/20 border border-[#98BDFF] dark:border-orange-500/30 flex items-center justify-center text-[#4B49AC] dark:text-orange-500 mb-3 shadow-md">
+        <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-3 shadow-lg backdrop-blur-md">
           <Building2 className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Brd 4C Management System</h1>
-        <p className="text-sm text-slate-600 dark:text-zinc-400 mt-1">Please sign in to continue</p>
+        <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-md">Brd 4C Management System</h1>
+        <p className="text-sm text-slate-200 mt-1 drop-shadow">Please sign in to continue</p>
       </div>
 
-      <Card className="w-full max-w-md border-[#98BDFF] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 backdrop-blur-xl shadow-xl z-10">
+      <Card className="w-full max-w-md border-white/10 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/85 backdrop-blur-2xl shadow-2xl z-10">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl text-slate-900 dark:text-white font-semibold">
             {authMode === "login" && "Welcome back"}
@@ -140,7 +142,7 @@ export default function AuthPage() {
                 type="email" 
                 placeholder="name@example.com" 
                 required 
-                className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+                className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
               />
             </div>
 
@@ -166,7 +168,7 @@ export default function AuthPage() {
                   type="password" 
                   placeholder="••••••••" 
                   required 
-                  className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+                  className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
                 />
               </div>
             )}
@@ -178,7 +180,7 @@ export default function AuthPage() {
                   name="username" 
                   placeholder="johndoe" 
                   required 
-                  className="bg-[#F0F2F5]/50 dark:bg-zinc-950 border-[#98BDFF]/60 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
+                  className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
                 />
               </div>
             )}
@@ -188,11 +190,11 @@ export default function AuthPage() {
                 <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Select Role</Label>
                 <RadioGroup name="role" defaultValue="boarder" className="flex gap-6 pt-1">
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" className="border-[#98BDFF] dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
+                    <RadioGroupItem value="admin" id="admin" className="border-slate-300 dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
                     <Label htmlFor="admin" className="text-sm text-slate-700 dark:text-zinc-300 cursor-pointer">Admin</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="boarder" id="boarder" className="border-[#98BDFF] dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
+                    <RadioGroupItem value="boarder" id="boarder" className="border-slate-300 dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
                     <Label htmlFor="boarder" className="text-sm text-slate-700 dark:text-zinc-300 cursor-pointer">Boarder</Label>
                   </div>
                 </RadioGroup>
@@ -208,7 +210,7 @@ export default function AuthPage() {
             <Button 
               type="submit" 
               disabled={isLoading} 
-              className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-orange-600 dark:hover:bg-orange-600/90 text-white font-medium mt-2 transition-all shadow-md shadow-[#4B49AC]/20 dark:shadow-orange-600/20"
+              className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-orange-600 dark:hover:bg-orange-600/90 text-white font-medium mt-2 transition-all shadow-md"
             >
               {isLoading ? (
                 <>
