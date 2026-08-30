@@ -54,11 +54,10 @@ export default function DashboardHeader({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [username, setUsername] = useState<string>(initialUsername || "Loading...");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
-  // Ref to track the latest user ID and avoid stale closures in subscriptions
   const userIdRef = useRef<string | null>(null);
-  
   const router = useRouter();
   const notifRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -75,12 +74,13 @@ export default function DashboardHeader({
       
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, avatar_url')
         .eq('id', user.id)
         .single();
 
-      if (profileData && profileData.username) {
-        setUsername(profileData.username);
+      if (profileData) {
+        if (profileData.username) setUsername(profileData.username);
+        if (profileData.avatar_url) setAvatarUrl(profileData.avatar_url);
       } else if (user.email) {
         setUsername(user.email.split('@')[0]);
       }
@@ -99,14 +99,11 @@ export default function DashboardHeader({
       const userEmail = user?.email;
 
       const filtered = data.filter((notif) => {
-        if (notif.type === 'bill_announcement') {
+        if (notif.type === 'bill_announcement' || notif.type === 'payment_status_update') {
           return userEmail && notif.email === userEmail;
         }
-        if (notif.type === 'payment_status_update') {
-          return userEmail && notif.email === userEmail;
-        }
-
-        if (notif.type === 'payment_approval' || notif.type === 'expense_approval') {
+        // Updated to include 'expense_payment_approval'
+        if (notif.type === 'payment_approval' || notif.type === 'expense_approval' || notif.type === 'expense_payment_approval') {
           return activeUserId && notif.details?.receiver_id === activeUserId;
         }
         if (activeUserId && notif.details?.user_id === activeUserId) {
@@ -192,7 +189,8 @@ export default function DashboardHeader({
         return;
       }
 
-      const isExpenseEntry = notif.type === 'expense_approval';
+      // Updated to recognize both expense approval variants
+      const isExpenseEntry = notif.type === 'expense_approval' || notif.type === 'expense_payment_approval';
       const targetId = isExpenseEntry ? notif.details?.expense_id : notif.details?.bill_id;
       const paymentAmount = Number(notif.details?.amount || 0);
       const payerUserId = notif.details?.user_id;
@@ -202,7 +200,7 @@ export default function DashboardHeader({
       const userKeyName = isExpenseEntry ? 'user_id' : 'boarder_id';
 
       if (action === 'approve') {
-        if ((notif.type === 'payment_approval' || notif.type === 'expense_approval') && notif.details) {
+        if ((notif.type === 'payment_approval' || notif.type === 'expense_approval' || notif.type === 'expense_payment_approval') && notif.details) {
           if (targetId && payerUserId) {
             const { data: memberShare, error: fetchShareError } = await supabase
               .from(tableName)
@@ -242,8 +240,7 @@ export default function DashboardHeader({
             .eq('end_date', notif.details.end_date);
         }
 
-        // Fixed payload mapped correctly to match transaction_history columns safely (omitting user_email / status to avoid schema mismatches seen in network tab)
-        const { error: transactionError } = await supabase.from('transaction_history').insert({
+        await supabase.from('transaction_history').insert({
           original_bill_id: !isExpenseEntry ? targetId : null,
           description: notif.message || `${notif.type} Approved`,
           total_amount: paymentAmount,
@@ -253,10 +250,6 @@ export default function DashboardHeader({
           payer_id: payerUserId || null,
           source_type: notif.type
         });
-
-        if (transactionError) {
-          throw new Error(transactionError.message);
-        }
 
         const approvalMessage = notif.type === 'vacation'
           ? `Your vacation request from ${notif.details?.start_date} to ${notif.details?.end_date} has been Approved!`
@@ -270,7 +263,7 @@ export default function DashboardHeader({
           details: notif.details
         });
       } else if (action === 'reject') {
-        if ((notif.type === 'payment_approval' || notif.type === 'expense_approval') && notif.details) {
+        if ((notif.type === 'payment_approval' || notif.type === 'expense_approval' || notif.type === 'expense_payment_approval') && notif.details) {
           if (targetId && payerUserId) {
             await supabase
               .from(tableName)
@@ -295,8 +288,7 @@ export default function DashboardHeader({
             .eq('end_date', notif.details.end_date);
         }
 
-        // Fixed payload mapped correctly for rejected status
-        const { error: transactionError } = await supabase.from('transaction_history').insert({
+        await supabase.from('transaction_history').insert({
           original_bill_id: !isExpenseEntry ? targetId : null,
           description: notif.message || `${notif.type} Rejected`,
           total_amount: paymentAmount,
@@ -306,10 +298,6 @@ export default function DashboardHeader({
           payer_id: payerUserId || null,
           source_type: `${notif.type}_rejected`
         });
-
-        if (transactionError) {
-          throw new Error(transactionError.message);
-        }
 
         const rejectionMessage = notif.type === 'vacation'
           ? `Your vacation request from ${notif.details?.start_date} to ${notif.details?.end_date} was Rejected.`
@@ -343,56 +331,71 @@ export default function DashboardHeader({
   const pendingCount = notifications.length;
 
   return (
-    <header className="flex flex-row justify-between items-center gap-4 px-4 sm:px-6 py-3.5 border-b border-[#98BDFF]/40 dark:border-[#ff8c00]/30 bg-white dark:bg-[#18181b] transition-colors shadow-xs relative z-40">
-      
-      {/* Title & Role */}
+    <header 
+      className="flex flex-row justify-between items-center gap-4 px-4 sm:px-6 py-4 bg-transparent relative z-40 shadow-none rounded-none w-full border-b border-[#4B49AC]"
+    >
       <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+          className="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-[#4B49AC] text-white font-bold text-sm shrink-0 overflow-hidden shadow-sm cursor-pointer"
+          style={{ border: 'none', outline: 'none' }}
+          aria-label="Open profile menu"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+          ) : (
+            <span>{username?.[0]?.toUpperCase() || "U"}</span>
+          )}
+        </button>
+
         <div className="min-w-0 flex-1 space-y-0.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-base sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">{title}</h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-[#4B49AC]/15 text-[#4B49AC] dark:bg-[#ff8c00]/15 dark:text-[#ff8c00]">
+            <h1 className="text-base sm:text-2xl font-bold tracking-tight text-slate-900 truncate">{title}</h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-[#4B49AC]/15 text-[#4B49AC]">
               {role}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 truncate">
-            Welcome back, <span className="font-semibold text-slate-700 dark:text-zinc-200">{username}</span>
+          <p className="text-xs sm:text-sm text-slate-500 truncate">
+            Welcome back, <span className="font-semibold text-slate-700">{username}</span>
           </p>
         </div>
       </div>
 
-      {/* Right action: Notification Icon & Responsive View */}
       <div className="flex items-center gap-2 shrink-0">
         <div className="relative" ref={notifRef}>
           <button 
             type="button"
             aria-label="Toggle Notifications"
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2.5 rounded-xl text-[#4B49AC] dark:text-[#ff8c00] hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition-all cursor-pointer"
+            className="relative p-2.5 rounded-xl text-[#4B49AC] hover:bg-slate-100/60 transition-all cursor-pointer"
+            style={{ border: 'none', outline: 'none' }}
           >
             <Bell size={18} />
             {pendingCount > 0 && (
               <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4B49AC]/50 dark:bg-[#ff8c00]/50 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#4B49AC] dark:bg-[#ff8c00]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4B49AC]/50 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#4B49AC]"></span>
               </span>
             )}
           </button>
 
           {isNotificationsOpen && (
             <>
-              {/* Mobile View: Full-Screen Page/Modal overlay list */}
-              <div className="fixed inset-0 z-[9999] bg-white dark:bg-[#18181b] flex flex-col sm:hidden animate-in fade-in duration-200">
-                <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200 dark:border-zinc-800">
+              {/* Mobile View */}
+              <div className="fixed inset-0 z-[9999] bg-white flex flex-col sm:hidden animate-in fade-in duration-200">
+                <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-base text-slate-900 dark:text-white">Notifications</h3>
-                    <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-[#98BDFF]/30 dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
+                    <h3 className="font-bold text-base text-slate-900">Notifications</h3>
+                    <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] px-2 py-0.5 rounded-md font-semibold">
                       {pendingCount} New
                     </span>
                   </div>
                   <button 
                     type="button"
                     onClick={() => setIsNotificationsOpen(false)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                    className="p-2 rounded-xl bg-slate-100 text-slate-600"
+                    style={{ border: 'none', outline: 'none' }}
                   >
                     <X size={20} />
                   </button>
@@ -401,11 +404,11 @@ export default function DashboardHeader({
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {pendingCount === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center space-y-3 py-12">
-                      <div className="p-4 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500">
+                      <div className="p-4 rounded-full bg-slate-100 text-slate-400">
                         <Bell size={32} />
                       </div>
-                      <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-base">No notifications</h4>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-xs">
+                      <h4 className="font-semibold text-slate-800 text-base">No notifications</h4>
+                      <p className="text-xs text-slate-500 max-w-xs">
                         You&apos;re all caught up! New alerts will show up here.
                       </p>
                     </div>
@@ -414,33 +417,36 @@ export default function DashboardHeader({
                       const isVacation = notif.type === 'vacation';
                       const isAnnouncement = notif.type === 'bill_announcement' || notif.type === 'payment_status_update';
                       return (
-                        <div key={notif.id} className="bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl space-y-3 text-xs shadow-xs">
-                          <div className="flex items-center gap-2 text-[#4B49AC] dark:text-[#ff8c00]">
+                        <div key={notif.id} className="bg-slate-50 p-4 rounded-xl space-y-3 text-xs shadow-xs">
+                          <div className="flex items-center gap-2 text-[#4B49AC]">
                             {isVacation ? <Plane size={16} /> : isAnnouncement ? <Info size={16} /> : <CreditCard size={16} />}
-                            <span className="font-semibold text-slate-900 dark:text-white capitalize text-sm">{notif.type.replace('_', ' ')}</span>
+                            <span className="font-semibold text-slate-900 capitalize text-sm">{notif.type.replace(/_/g, ' ')}</span>
                           </div>
-                          <p className="text-slate-600 dark:text-zinc-300 leading-relaxed text-sm">{notif.message}</p>
+                          <p className="text-slate-600 leading-relaxed text-sm">{notif.message}</p>
 
                           {isAnnouncement ? (
-                            <div className="flex justify-end pt-3 border-t border-slate-200/60 dark:border-zinc-800">
+                            <div className="flex justify-end pt-3">
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'dismiss')}
-                                className="w-full bg-slate-200/60 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                className="w-full bg-slate-200/60 text-slate-700 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 Got it / Dismiss
                               </button>
                             </div>
                           ) : (
-                            <div className="flex justify-end gap-3 pt-3 border-t border-slate-200/60 dark:border-zinc-800">
+                            <div className="flex justify-end gap-3 pt-3">
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'reject')}
-                                className="flex-1 bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 <X size={14} className="mr-1.5" /> Reject
                               </button>
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'approve')}
-                                className="flex-1 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                className="flex-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 h-10 text-xs font-semibold rounded-xl flex items-center justify-center cursor-pointer transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 <Check size={14} className="mr-1.5" /> Approve
                               </button>
@@ -453,11 +459,11 @@ export default function DashboardHeader({
                 </div>
               </div>
 
-              {/* Desktop View: Dropdown panel */}
-              <div className="hidden sm:block absolute right-0 mt-3 w-96 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[9999] p-4 text-slate-900 dark:text-white space-y-3 animate-in fade-in zoom-in duration-200">
-                <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800 pb-3">
+              {/* Desktop View */}
+              <div className="hidden sm:block absolute right-0 mt-3 w-96 bg-white shadow-2xl rounded-2xl z-[9999] p-4 text-slate-900 space-y-3 animate-in fade-in zoom-in duration-200">
+                <div className="flex justify-between items-center pb-3">
                   <h4 className="font-bold text-sm">Notifications</h4>
-                  <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-[#ff8c00]/10 dark:text-[#ff8c00] border border-[#98BDFF]/30 dark:border-[#ff8c00]/30 px-2 py-0.5 rounded-md font-semibold">
+                  <span className="text-xs bg-[#4B49AC]/10 text-[#4B49AC] px-2 py-0.5 rounded-md font-semibold">
                     {pendingCount} New
                   </span>
                 </div>
@@ -465,40 +471,43 @@ export default function DashboardHeader({
                 <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
                   {pendingCount === 0 ? (
                     <div className="py-8 text-center space-y-2">
-                      <p className="text-xs text-slate-500 dark:text-zinc-400">No notifications at the moment.</p>
+                      <p className="text-xs text-slate-500">No notifications at the moment.</p>
                     </div>
                   ) : (
                     notifications.map((notif) => {
                       const isVacation = notif.type === 'vacation';
                       const isAnnouncement = notif.type === 'bill_announcement' || notif.type === 'payment_status_update';
                       return (
-                        <div key={notif.id} className="bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 p-3 rounded-xl space-y-2 text-xs">
-                          <div className="flex items-center gap-2 text-[#4B49AC] dark:text-[#ff8c00]">
+                        <div key={notif.id} className="bg-slate-50 p-3 rounded-xl space-y-2 text-xs">
+                          <div className="flex items-center gap-2 text-[#4B49AC]">
                             {isVacation ? <Plane size={14} /> : isAnnouncement ? <Info size={14} /> : <CreditCard size={14} />}
-                            <span className="font-semibold text-slate-900 dark:text-white capitalize truncate">{notif.type.replace('_', ' ')}</span>
+                            <span className="font-semibold text-slate-900 capitalize truncate">{notif.type.replace(/_/g, ' ')}</span>
                           </div>
-                          <p className="text-slate-600 dark:text-zinc-300 leading-relaxed">{notif.message}</p>
+                          <p className="text-slate-600 leading-relaxed">{notif.message}</p>
 
                           {isAnnouncement ? (
-                            <div className="flex justify-end pt-2 border-t border-slate-200/60 dark:border-zinc-800">
+                            <div className="flex justify-end pt-2">
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'dismiss')}
-                                className="w-full bg-slate-200/60 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 h-7 text-[11px] px-3 rounded-lg flex items-center justify-center cursor-pointer font-medium transition"
+                                className="w-full bg-slate-200/60 text-slate-700 h-7 text-[11px] px-3 rounded-lg flex items-center justify-center cursor-pointer font-medium transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 Dismiss
                               </button>
                             </div>
                           ) : (
-                            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-zinc-800">
+                            <div className="flex justify-end gap-2 pt-2">
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'reject')}
-                                className="bg-red-500/10 text-red-600 hover:bg-red-500/20 border border-red-500/20 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 <X size={12} className="mr-1" /> Reject
                               </button>
                               <button 
                                 onClick={() => handleDismissOrApprove(notif, 'approve')}
-                                className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                                className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 h-7 text-[11px] px-3 rounded-lg flex items-center cursor-pointer font-medium transition"
+                                style={{ border: 'none', outline: 'none' }}
                               >
                                 <Check size={12} className="mr-1" /> Approve
                               </button>

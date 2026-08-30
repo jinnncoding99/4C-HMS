@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Lock, Building2, Sun, Moon, ArrowLeft } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Loader2, Lock, Building2, ArrowLeft, ShieldCheck, Users } from "lucide-react";
 
 export default function AuthPage() {
   const [authMode, setAuthMode] = useState<"login" | "signup" | "forgot">("login");
@@ -21,7 +20,6 @@ export default function AuthPage() {
   const router = useRouter();
   const { setUsername } = useUser();
   const supabase = createClient();
-  const { theme, setTheme } = useTheme();
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
@@ -73,18 +71,29 @@ export default function AuthPage() {
     }
   };
 
+  const getTitle = () => {
+    if (authMode === "login") return "Sign in to continue";
+    if (authMode === "signup") return "Create an account";
+    if (authMode === "forgot") return "Reset your password";
+    return "";
+  };
+
+  const getSubtitle = () => {
+     if (authMode === "login") return "Enter your credentials to access your dashboard";
+     if (authMode === "signup") return "Fill in the details below to get started";
+     if (authMode === "forgot") return "Enter your email and we'll send you a recovery link";
+     return "";
+  }
+
   if (isPending) {
     return (
-      <div className="relative flex justify-center items-center min-h-screen bg-cover bg-center px-4 overflow-hidden" style={{ backgroundImage: "url('/your-background-image.jpg')" }}>
-        {/* Dark overlay for mobile and desktop readability */}
-        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs" />
-        
-        <Card className="w-full max-w-md p-8 text-center border-slate-700/50 bg-white/95 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl z-10">
-          <div className="mx-auto w-12 h-12 rounded-full bg-[#4B49AC]/10 dark:bg-orange-500/10 flex items-center justify-center mb-4 text-[#4B49AC] dark:text-orange-500">
+      <div className="relative flex justify-center items-center min-h-screen bg-slate-50 px-4">
+        <Card className="w-full max-w-md p-8 text-center border-slate-200 bg-white shadow-2xl rounded-2xl">
+          <div className="mx-auto w-12 h-12 rounded-full bg-[#4B49AC]/10 flex items-center justify-center mb-4 text-[#4B49AC]">
             <Lock className="w-6 h-6" />
           </div>
-          <CardTitle className="text-slate-900 dark:text-white text-xl mb-2">Check your email</CardTitle>
-          <p className="text-sm text-slate-600 dark:text-zinc-400">
+          <CardTitle className="text-slate-900 text-xl mb-2">Check your email</CardTitle>
+          <p className="text-sm text-slate-600">
             A verification link has been sent to your email. Please click it to activate your account.
           </p>
         </Card>
@@ -93,167 +102,184 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="relative flex flex-col justify-center items-center min-h-screen bg-cover bg-center px-4 py-8 overflow-hidden transition-colors" style={{ backgroundImage: "url('/your-background-image.jpg')" }}>
-      {/* Dark overlay to ensure contrast on mobile and desktop screens */}
-      <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px]" />
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-900 md:bg-slate-50">
 
-      {/* Theme Toggle Button in Top Corner */}
-      <div className="absolute top-6 right-6 z-20">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="rounded-full border-white/20 bg-white/80 dark:bg-zinc-900/80 text-[#4B49AC] dark:text-zinc-200 shadow-lg hover:bg-white"
-        >
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </div>
-
-      {/* App Logo & Branding Header */}
-      <div className="mb-6 text-center z-10 flex flex-col items-center">
-        <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-3 shadow-lg backdrop-blur-md">
-          <Building2 className="w-6 h-6" />
+      {/* Brand & Visual Panel */}
+      <div className="w-full md:w-1/2 lg:w-3/5 relative flex flex-col justify-between p-6 pb-12 md:p-12 bg-slate-900 text-white overflow-hidden" style={{ backgroundImage: "url('/your-background-image.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[2px]" />
+        
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white backdrop-blur-md shadow-lg">
+            <Building2 className="w-4 h-4 md:w-5 md:h-5" />
+          </div>
+          <span className="font-bold tracking-tight text-base md:text-lg">Brd 4C Management System</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-md">Brd 4C Management System</h1>
-        <p className="text-sm text-slate-200 mt-1 drop-shadow">Please sign in to continue</p>
+
+        <div className="relative z-10 my-6 md:my-auto max-w-lg space-y-2 md:space-y-4">
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+            Management System Made Simple.
+          </h1>
+          <p className="hidden md:block text-slate-300 text-base leading-relaxed">
+            Streamline boarder administration, track records, and manage daily operations effortlessly in one centralized hub.
+          </p>
+          <div className="hidden md:pt-2 md:flex flex-wrap items-center gap-6 text-sm text-slate-300">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[#4B49AC]" />
+              <span>Secure Role Access</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#4B49AC]" />
+              <span>Boarder Portal</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 text-xs text-slate-500 hidden md:block">
+          © {new Date().getFullYear()} Brd 4C Management System. All rights reserved.
+        </div>
       </div>
 
-      <Card className="w-full max-w-md border-white/10 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/85 backdrop-blur-2xl shadow-2xl z-10">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-xl text-slate-900 dark:text-white font-semibold">
-            {authMode === "login" && "Welcome back"}
-            {authMode === "signup" && "Create an account"}
-            {authMode === "forgot" && "Reset your password"}
-          </CardTitle>
-          <CardDescription className="text-slate-600 dark:text-zinc-400">
-            {authMode === "login" && "Enter your credentials to access your dashboard"}
-            {authMode === "signup" && "Fill in the details below to get started"}
-            {authMode === "forgot" && "Enter your email and we'll send you a recovery link"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Email</Label>
-              <Input 
-                name="email" 
-                type="email" 
-                placeholder="name@example.com" 
-                required 
-                className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
-              />
+      {/* Authentication Form Container */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 z-10 -mt-6 rounded-t-3xl md:mt-0 md:rounded-none bg-slate-50">
+        
+        <Card className="w-full max-w-md border-none md:border border-slate-200 bg-transparent md:bg-white shadow-none md:shadow-xl rounded-2xl">
+          <CardContent className="pt-4 md:pt-6 px-0 md:px-6">
+            
+            <div className="mb-4 px-6 md:px-0">
+                <h2 className="text-2xl text-slate-900 font-bold tracking-tight">
+                    {getTitle()}
+                </h2>
+                <p className="text-slate-600 mt-1 text-sm">
+                    {getSubtitle()}
+                </p>
             </div>
 
-            {authMode !== "forgot" && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Password</Label>
+            <form action={handleSubmit} className="space-y-3 md:space-y-4 px-6 md:px-0">
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-700 font-medium">Email</Label>
+                <Input 
+                  name="email" 
+                  type="email" 
+                  placeholder="name@example.com" 
+                  required 
+                  className="bg-white md:bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#4B49AC] h-10 md:h-11" 
+                />
+              </div>
+
+              {authMode !== "forgot" && (
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-700 font-medium">Password</Label>
+                  <Input 
+                    name="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    required 
+                    className="bg-white md:bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#4B49AC] h-10 md:h-11" 
+                  />
                   {authMode === "login" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode("forgot");
-                        setForgotSuccess(false);
-                      }}
-                      className="text-xs text-[#4B49AC] dark:text-orange-500 hover:underline"
-                    >
-                      Forgot password?
-                    </button>
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("forgot");
+                          setForgotSuccess(false);
+                        }}
+                        className="text-xs text-[#4B49AC] hover:underline font-medium"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                   )}
                 </div>
-                <Input 
-                  name="password" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  required 
-                  className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
-                />
-              </div>
-            )}
-            
-            {authMode === "signup" && (
-              <div className="space-y-2">
-                <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Username</Label>
-                <Input 
-                  name="username" 
-                  placeholder="johndoe" 
-                  required 
-                  className="bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-[#4B49AC] dark:focus-visible:ring-orange-500" 
-                />
-              </div>
-            )}
-
-            {authMode === "signup" && (
-              <div className="space-y-2 pt-1">
-                <Label className="text-xs text-slate-700 dark:text-zinc-300 font-medium">Select Role</Label>
-                <RadioGroup name="role" defaultValue="boarder" className="flex gap-6 pt-1">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="admin" id="admin" className="border-slate-300 dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
-                    <Label htmlFor="admin" className="text-sm text-slate-700 dark:text-zinc-300 cursor-pointer">Admin</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="boarder" id="boarder" className="border-slate-300 dark:border-zinc-700 text-[#4B49AC] dark:text-orange-500" />
-                    <Label htmlFor="boarder" className="text-sm text-slate-700 dark:text-zinc-300 cursor-pointer">Boarder</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-
-            {forgotSuccess && (
-              <p className="text-xs text-green-600 dark:text-green-400 font-medium text-center">
-                Password reset link sent! Check your email.
-              </p>
-            )}
-
-            <Button 
-              type="submit" 
-              disabled={isLoading} 
-              className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-orange-600 dark:hover:bg-orange-600/90 text-white font-medium mt-2 transition-all shadow-md"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait...
-                </>
-              ) : (
-                <>
-                  {authMode === "login" && "Sign In"}
-                  {authMode === "signup" && "Create Account"}
-                  {authMode === "forgot" && "Send Reset Instructions"}
-                </>
               )}
-            </Button>
-          </form>
+              
+              {authMode === "signup" && (
+                <div className="space-y-1">
+                  <Label className="text-xs text-slate-700 font-medium">Username</Label>
+                  <Input 
+                    name="username" 
+                    placeholder="johndoe" 
+                    required 
+                    className="bg-white md:bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-[#4B49AC] h-10 md:h-11" 
+                  />
+                </div>
+              )}
 
-          <div className="mt-4 text-center">
-            {authMode === "forgot" ? (
+              {authMode === "signup" && (
+                <div className="space-y-2 pt-1">
+                  <Label className="text-xs text-slate-700 font-medium">Select Role</Label>
+                  <RadioGroup name="role" defaultValue="boarder" className="flex items-center space-x-6 pt-1">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="boarder" id="boarder" />
+                      <Label htmlFor="boarder" className="text-xs font-normal text-slate-700 cursor-pointer">
+                        Boarder
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="admin" id="admin" />
+                      <Label htmlFor="admin" className="text-xs font-normal text-slate-700 cursor-pointer">
+                        Admin
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
+
+              {forgotSuccess && (
+                <p className="text-xs text-green-600 font-medium text-center pt-1">
+                  Password reset link sent! Check your email.
+                </p>
+              )}
+
               <Button 
-                variant="ghost" 
-                className="text-xs text-slate-600 dark:text-zinc-400 hover:text-[#4B49AC] dark:hover:text-white hover:bg-transparent p-0 h-auto inline-flex items-center gap-1" 
-                onClick={() => {
-                  setAuthMode("login");
-                  setForgotSuccess(false);
-                }}
+                type="submit" 
+                disabled={isLoading} 
+                className="w-full bg-[#4B49AC] hover:bg-[#4B49AC]/90 text-white font-medium mt-2 transition-all shadow-md h-10 md:h-11"
               >
-                <ArrowLeft className="w-3 h-3" /> Back to sign in
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait...
+                  </>
+                ) : (
+                  <>
+                    {authMode === "login" && "Sign In"}
+                    {authMode === "signup" && "Create Account"}
+                    {authMode === "forgot" && "Send Reset Instructions"}
+                  </>
+                )}
               </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                className="text-xs text-slate-600 dark:text-zinc-400 hover:text-[#4B49AC] dark:hover:text-white hover:bg-transparent p-0 h-auto" 
-                onClick={() => {
-                  setAuthMode(authMode === "login" ? "signup" : "login");
-                  setForgotSuccess(false);
-                }}
-              >
-                {authMode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </form>
+
+            <div className="mt-4 text-center px-6 md:px-0 border-t border-slate-100 pt-3 md:border-none md:pt-0 pb-2">
+              {authMode === "forgot" ? (
+                <Button 
+                  variant="ghost" 
+                  className="text-xs text-slate-600 hover:text-[#4B49AC] hover:bg-transparent p-0 h-auto inline-flex items-center gap-1.5 font-medium" 
+                  onClick={() => {
+                    setAuthMode("login");
+                    setForgotSuccess(false);
+                  }}
+                >
+                  <ArrowLeft className="w-3 h-3" /> Back to sign in
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  className="text-xs text-slate-600 hover:text-[#4B49AC] hover:bg-transparent p-0 h-auto font-medium" 
+                  onClick={() => {
+                    setAuthMode(authMode === "login" ? "signup" : "login");
+                    setForgotSuccess(false);
+                  }}
+                >
+                  {authMode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }

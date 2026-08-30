@@ -131,69 +131,69 @@ export const UnifiedDashboardCard = ({
   );
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors">
+    <div className="p-4 border border-slate-200 rounded-lg bg-white space-y-3 shadow-sm transition-colors">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-bold text-lg text-slate-900 dark:text-white">{item.description || item.title}</p>
+            <p className="font-bold text-lg text-slate-900">{item.description || item.title}</p>
             {allOthersPaid && (
-              <span className="text-[10px] bg-emerald-500/10 dark:bg-green-500/20 border border-emerald-500 dark:border-green-500 text-emerald-600 dark:text-green-400 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-[10px] bg-emerald-500/10 border border-emerald-500 text-emerald-600 font-semibold px-2 py-0.5 rounded-full">
                 All Shares Collected
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-gray-400">
+          <p className="text-xs text-slate-500">
             {type === 'bill' ? `Billing Period: ${item.billing_period_start || 'N/A'} to ${item.billing_period_end || 'N/A'} (${totalDays} Days)` : `Date Recorded: ${item.date || item.created_at?.split('T')[0] || 'N/A'}`} • Type:{' '}
             <span className="capitalize">{item.calculation_type || item.category || 'standard'}</span>
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-slate-500 dark:text-gray-400">Total {type === 'bill' ? 'Bill Due' : 'Expense Amount'}</p>
-          <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{totalItemAmount.toFixed(2)}</p>
+          <p className="text-sm text-slate-500">Total {type === 'bill' ? 'Bill Due' : 'Expense Amount'}</p>
+          <p className="font-bold text-xl text-[#4B49AC]">₱{totalItemAmount.toFixed(2)}</p>
         </div>
       </div>
 
       {/* Built-in Progress Bar */}
       <div className="space-y-1 pt-1">
-        <div className="flex justify-between text-[11px] text-slate-500 dark:text-gray-400">
+        <div className="flex justify-between text-[11px] text-slate-500">
           <span>Collection Progress</span>
-          <span className="font-semibold text-slate-700 dark:text-gray-300">
+          <span className="font-semibold text-slate-700">
             ₱{totalCollectedOverall.toFixed(2)} / ₱{totalItemAmount.toFixed(2)} ({progressPercentage.toFixed(0)}%)
           </span>
         </div>
-        <div className="w-full bg-slate-100 dark:bg-[#222] h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
           <div 
-            className="bg-[#4B49AC] dark:bg-[#ff8c00] h-full transition-all duration-300 rounded-full" 
+            className="bg-[#4B49AC] h-full transition-all duration-300 rounded-full" 
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-[#222]">
+      <div className="flex justify-between items-center pt-2 border-t border-slate-100">
         <div>
-          <p className="text-xs text-slate-500 dark:text-gray-400">Your Share Due:</p>
-          <p className="text-md font-bold text-slate-900 dark:text-white">
+          <p className="text-xs text-slate-500">Your Share Due:</p>
+          <p className="text-md font-bold text-slate-900">
             {isPaymentReceiver ? (
               allOthersPaid ? (
                 isMySharePaid ? (
-                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                  <span className="text-emerald-600 font-semibold">₱0.00 (Paid)</span>
                 ) : (
                   `₱${userShareDue.toFixed(2)}`
                 )
               ) : (
-                <span className="text-[#4B49AC] dark:text-[#ff8c00]">
+                <span className="text-[#4B49AC]">
                   ₱{userShareDue.toFixed(2)} <span className="text-[10px] font-normal text-slate-500">(Base + Collected: ₱{totalCollectedFromOthers.toFixed(2)})</span>
                 </span>
               )
             ) : (
               myBreakdown ? (
                 isMySharePaid ? (
-                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                  <span className="text-emerald-600 font-semibold">₱0.00 (Paid)</span>
                 ) : (
                   `₱${userShareDue.toFixed(2)}`
                 )
               ) : (
-                <span className="text-slate-400 dark:text-gray-500 italic text-xs">Not included in this item</span>
+                <span className="text-slate-400 italic text-xs">Not included in this item</span>
               )
             )}
           </p>
@@ -204,7 +204,7 @@ export const UnifiedDashboardCard = ({
             isReceiverFullyAccumulated ? (
               <Button
                 onClick={() => onSettleItem(item)}
-                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
               >
                 Mark as Settled
               </Button>
@@ -212,13 +212,13 @@ export const UnifiedDashboardCard = ({
           ) : (
             myBreakdown && userShareDue > 0 && !isMySharePaid && !isDanz && (
               hasPendingSubmission ? (
-                <span className="text-xs text-amber-600 dark:text-yellow-500 font-semibold bg-amber-500/10 dark:bg-yellow-500/10 border border-amber-500/30 dark:border-yellow-500/30 px-3 py-1.5 rounded-md">
+                <span className="text-xs text-amber-600 font-semibold bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-md">
                   Pending Approval
                 </span>
               ) : (
                 <Button
                   onClick={() => onPayNow(item, userShareDue)}
-                  className="bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                  className="bg-[#4B49AC] hover:bg-[#3f3dc9] text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
                 >
                   Pay Now
                 </Button>
@@ -238,7 +238,7 @@ export const UnifiedDashboardCard = ({
                       e.stopPropagation();
                       onEditItem(item);
                     }}
-                    className="text-blue-600 dark:text-blue-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                    className="text-blue-600 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-50"
                     title="Edit Item"
                   >
                     <Edit size={16} />
@@ -252,7 +252,7 @@ export const UnifiedDashboardCard = ({
                       e.stopPropagation();
                       onDeleteItem(item.id);
                     }}
-                    className="text-red-600 dark:text-red-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10"
+                    className="text-red-600 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50"
                     title="Delete Item"
                   >
                     <Trash2 size={16} />
@@ -265,10 +265,10 @@ export const UnifiedDashboardCard = ({
         </div>
       </div>
 
-      <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-[#222]">
+      <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
         <button
           onClick={() => onToggleExpand(item.id)}
-          className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
+          className="text-xs text-[#4B49AC] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
         >
           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {isExpanded ? "Hide Member Breakdown & Days" : `See More Info (Participant Shares & Days) • ${normalizedBreakdown.length} Participants`}
@@ -276,7 +276,7 @@ export const UnifiedDashboardCard = ({
 
         <button
           onClick={() => setShowTimeline(!showTimeline)}
-          className="text-xs text-slate-500 dark:text-gray-400 flex items-center gap-1 hover:text-[#4B49AC] dark:hover:text-[#ff8c00] transition-colors font-semibold focus:outline-none cursor-pointer"
+          className="text-xs text-slate-500 flex items-center gap-1 hover:text-[#4B49AC] transition-colors font-semibold focus:outline-none cursor-pointer"
         >
           <History size={13} />
           {showTimeline ? "Hide Audit Log" : "Activity Timeline"}
@@ -285,29 +285,29 @@ export const UnifiedDashboardCard = ({
 
       {/* #3 Activity Timeline & Audit Log */}
       {showTimeline && (
-        <div className="mt-3 p-3 bg-slate-50 dark:bg-[#151515] rounded-md border border-slate-200 dark:border-[#333] space-y-2.5 transition-colors">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-gray-200 uppercase tracking-wider mb-2">
-            <Clock size={14} className="text-[#4B49AC] dark:text-[#ff8c00]" />
+        <div className="mt-3 p-3 bg-slate-50 rounded-md border border-slate-200 space-y-2.5 transition-colors">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <Clock size={14} className="text-[#4B49AC]" />
             Audit Log & Activity Timeline
           </div>
-          <div className="space-y-2 text-xs border-l-2 border-slate-200 dark:border-[#333] pl-3 ml-1">
+          <div className="space-y-2 text-xs border-l-2 border-slate-200 pl-3 ml-1">
             <div className="relative">
-              <div className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-[#4B49AC] dark:bg-[#ff8c00]" />
-              <p className="font-semibold text-slate-800 dark:text-gray-200">
+              <div className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-[#4B49AC]" />
+              <p className="font-semibold text-slate-800">
                 {type === 'bill' ? 'Monthly Bill Created' : 'Expense Recorded'}
               </p>
-              <p className="text-[10px] text-slate-500 dark:text-gray-400">
+              <p className="text-[10px] text-slate-500">
                 {item.created_at ? new Date(item.created_at).toLocaleString() : 'Recently'}
               </p>
             </div>
 
             {itemPaymentRequests.map((req, idx) => (
               <div key={req.id || idx} className="relative pt-1">
-                <div className="absolute -left-[17px] top-2 w-2.5 h-2.5 rounded-full bg-amber-500 dark:bg-yellow-500" />
-                <p className="font-semibold text-slate-800 dark:text-gray-200">
+                <div className="absolute -left-[17px] top-2 w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <p className="font-semibold text-slate-800">
                   Payment Proof Submitted {req.status ? `(${req.status})` : ''}
                 </p>
-                <p className="text-[10px] text-slate-500 dark:text-gray-400">
+                <p className="text-[10px] text-slate-500">
                   Amount: ₱{Number(req.amount || req.details?.amount || 0).toFixed(2)} • {req.created_at ? new Date(req.created_at).toLocaleString() : 'Pending review'}
                 </p>
               </div>
@@ -315,9 +315,9 @@ export const UnifiedDashboardCard = ({
 
             {(item.is_paid || item.status === 'paid' || allOthersPaid) && (
               <div className="relative pt-1">
-                <div className="absolute -left-[17px] top-2 w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-green-500" />
-                <p className="font-semibold text-emerald-700 dark:text-green-400">Item Fully Settled / Collected</p>
-                <p className="text-[10px] text-slate-500 dark:text-gray-400">All corresponding member shares have been successfully verified and cleared.</p>
+                <div className="absolute -left-[17px] top-2 w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <p className="font-semibold text-emerald-700">Item Fully Settled / Collected</p>
+                <p className="text-[10px] text-slate-500">All corresponding member shares have been successfully verified and cleared.</p>
               </div>
             )}
           </div>
@@ -325,8 +325,8 @@ export const UnifiedDashboardCard = ({
       )}
 
       {isExpanded && (
-        <div className="mt-3 p-3 bg-slate-100 dark:bg-[#181818] rounded-md border border-slate-200 dark:border-[#333] space-y-2 transition-colors">
-          <p className="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-wider mb-2">
+        <div className="mt-3 p-3 bg-slate-100 rounded-md border border-slate-200 space-y-2 transition-colors">
+          <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
             Participant Share Breakdown ({normalizedBreakdown.length})
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -343,12 +343,12 @@ export const UnifiedDashboardCard = ({
               }
 
               return (
-                <div key={member.id || Math.random()} className="flex justify-between items-center bg-white dark:bg-[#111] p-2 rounded border border-slate-200 dark:border-[#222] text-xs transition-colors">
+                <div key={member.id || Math.random()} className="flex justify-between items-center bg-white p-2 rounded border border-slate-200 text-xs transition-colors">
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">
+                    <p className="font-semibold text-slate-900">
                       {member.username} {isReceiver ? "(Receiver/Payer)" : ""}
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-gray-400">
+                    <p className="text-[10px] text-slate-500">
                       {type === 'bill' 
                         ? `Days Active: ${member.daysPresent} / ${totalDays} days`
                         : `Split Share (${item.date || item.created_at?.split('T')[0] || 'One-time'})`
@@ -356,7 +356,7 @@ export const UnifiedDashboardCard = ({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-[#4B49AC] dark:text-[#ff8c00]">
+                    <p className="font-bold text-[#4B49AC]">
                       {isPaid && (!isReceiver || allOthersPaid) ? (
                         '₱0.00'
                       ) : (
@@ -364,9 +364,9 @@ export const UnifiedDashboardCard = ({
                       )}
                     </p>
                     <span className={`text-[10px] font-semibold uppercase block ${
-                      isPaid ? 'text-emerald-600 dark:text-green-500' :
-                      member.status === 'pending_approval' ? 'text-amber-600 dark:text-yellow-500' :
-                      'text-slate-500 dark:text-gray-400'
+                      isPaid ? 'text-emerald-600' :
+                      member.status === 'pending_approval' ? 'text-amber-600' :
+                      'text-slate-500'
                     }`}>
                       {member.isPaid ? 'paid' : (member.status || 'unpaid')}
                     </span>

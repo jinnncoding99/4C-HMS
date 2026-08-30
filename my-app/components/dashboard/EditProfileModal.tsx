@@ -1,3 +1,4 @@
+// components/modals/EditProfileModal.tsx
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -321,18 +322,18 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       
       <canvas ref={canvasRef} className="hidden" />
 
       {rawAvatarSrc && (
         <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center space-y-4">
-            <h4 className="font-bold text-slate-900 dark:text-white text-base">Position & Zoom Avatar</h4>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 text-center">Zoom out or click "Fit to Frame" to capture the whole picture inside the avatar circle.</p>
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm p-6 shadow-2xl flex flex-col items-center space-y-4">
+            <h4 className="font-bold text-slate-900 text-base">Position & Zoom Avatar</h4>
+            <p className="text-xs text-slate-500 text-center">Zoom out or click &quot;Fit to Frame&quot; to capture the whole picture inside the avatar circle.</p>
             
             <div 
-              className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#4B49AC] dark:border-[#ff8c00] cursor-grab active:cursor-grabbing select-none bg-slate-900 flex items-center justify-center shadow-inner"
+              className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-[#4B49AC] cursor-grab active:cursor-grabbing select-none bg-slate-900 flex items-center justify-center shadow-inner"
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -354,7 +355,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
             <button 
               type="button" 
               onClick={handleFitToFrame}
-              className="px-3 py-1.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-200 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 rounded-lg transition flex items-center gap-1.5 cursor-pointer"
             >
               <Minimize2 size={13} /> Fit Whole Picture Inside
             </button>
@@ -368,7 +369,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
                 step="0.05" 
                 value={zoom} 
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
-                className="flex-1 accent-[#4B49AC] dark:accent-[#ff8c00] cursor-pointer"
+                className="flex-1 accent-[#4B49AC] cursor-pointer"
               />
               <ZoomIn size={16} className="text-slate-400" />
             </div>
@@ -377,14 +378,14 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
               <button 
                 type="button" 
                 onClick={() => setRawAvatarSrc(null)}
-                className="flex-1 py-2 text-xs font-semibold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl transition cursor-pointer"
+                className="flex-1 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
               >
                 Cancel
               </button>
               <button 
                 type="button" 
                 onClick={handleApplyCrop}
-                className="flex-1 py-2 text-xs font-bold text-white bg-[#4B49AC] dark:bg-[#ff8c00] dark:text-black hover:opacity-90 rounded-xl transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2 text-xs font-bold text-white bg-[#4B49AC] hover:opacity-90 rounded-xl transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Check size={14} /> Apply Crop
               </button>
@@ -393,13 +394,13 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800">
-          <h3 className="font-bold text-lg text-slate-900 dark:text-white">Edit Profile</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h3 className="font-bold text-lg text-slate-900">Edit Profile</h3>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -408,21 +409,21 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           
           <div className="flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 flex items-center justify-center">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200 flex items-center justify-center">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
               ) : (
                 <User size={32} className="text-slate-400" />
               )}
             </div>
-            <label className="text-xs font-semibold text-[#4B49AC] dark:text-[#ff8c00] hover:underline cursor-pointer">
+            <label className="text-xs font-semibold text-[#4B49AC] hover:underline cursor-pointer">
               Change & Crop Avatar
               <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
             </label>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Username</label>
+            <label className="text-xs font-semibold text-slate-700">Username</label>
             <div className="relative flex items-center">
               <User size={16} className="absolute left-3 text-slate-400" />
               <input 
@@ -430,15 +431,15 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4B49AC]/30 dark:focus:ring-[#ff8c00]/30 dark:focus:border-[#ff8c00]"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4B49AC]/30"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Email Address</label>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500 italic">Cannot be modified</span>
+              <label className="text-xs font-semibold text-slate-700">Email Address</label>
+              <span className="text-[10px] text-slate-400 italic">Cannot be modified</span>
             </div>
             <div className="relative flex items-center">
               <Mail size={16} className="absolute left-3 text-slate-400" />
@@ -446,15 +447,15 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
                 type="email"
                 value={email}
                 disabled
-                className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm text-slate-500 dark:text-zinc-400 cursor-not-allowed select-none"
+                className="w-full pl-9 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed select-none"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Payment QR Code</label>
+            <label className="text-xs font-semibold text-slate-700">Payment QR Code</label>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
                 {qrPreview ? (
                   <img src={qrPreview} alt="QR Preview" className="w-full h-full object-contain bg-white" />
                 ) : (
@@ -462,7 +463,7 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
                 )}
               </div>
               <div className="flex flex-col gap-2 flex-1">
-                <label className="border border-dashed border-slate-300 dark:border-zinc-700 hover:border-[#4B49AC] dark:hover:border-[#ff8c00] p-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer text-xs text-slate-600 dark:text-zinc-300 font-medium transition">
+                <label className="border border-dashed border-slate-300 hover:border-[#4B49AC] p-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer text-xs text-slate-600 font-medium transition">
                   <Upload size={14} /> Replace QR Code
                   <input type="file" accept="image/*" onChange={handleQrChange} className="hidden" />
                 </label>
@@ -479,18 +480,18 @@ export default function EditProfileModal({ isOpen, onClose, onProfileUpdated }: 
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <button 
               type="button" 
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#4B49AC] hover:bg-[#4B49AC]/90 dark:bg-[#ff8c00] dark:text-black dark:hover:opacity-90 rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#4B49AC] hover:bg-[#4B49AC]/90 rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>

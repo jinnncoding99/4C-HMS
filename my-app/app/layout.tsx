@@ -1,7 +1,7 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { UserProvider } from "@/context/UserContext";
-import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,17 +30,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white transition-colors">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <UserProvider>
-            {children}
-          </UserProvider>
-        </ThemeProvider>
+      <body className="min-h-full flex flex-col m-0 p-0 bg-background text-foreground transition-colors w-full overflow-x-hidden">
+        <UserProvider>
+          {children}
+        </UserProvider>
       </body>
     </html>
   );

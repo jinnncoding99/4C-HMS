@@ -1,4 +1,4 @@
-// components/billing/PendingApprovals.tsx
+// components/dashboard/PendingExpenseApprovals.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -8,27 +8,26 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, XCircle, ExternalLink, Image as ImageIcon } from "lucide-react";
 
-interface PaymentDetails {
-  bill_id?: string;
+interface ExpensePaymentDetails {
+  expense_id: string;
   user_id: string;
   receiver_id?: string;
   amount: string;
   method: string;
   receipt_url?: string | null;
-  source_type?: string;
 }
 
-interface NotificationItem {
+interface ExpenseNotificationItem {
   id: string;
   type: string;
   email: string;
   message: string;
   status?: string;
-  details?: PaymentDetails;
+  details?: ExpensePaymentDetails;
 }
 
-export default function PendingApprovals() {
-  const [requests, setRequests] = useState<NotificationItem[]>([]);
+export default function PendingExpenseApprovals() {
+  const [requests, setRequests] = useState<ExpenseNotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   
@@ -40,11 +39,11 @@ export default function PendingApprovals() {
     const { data, error } = await supabase
       .from("notifications")
       .select("*")
-      .eq("type", "payment_approval")
+      .eq("type", "expense_payment_approval")
       .eq("status", "pending");
 
     if (error) {
-      console.error("Error fetching notifications:", error.message);
+      console.error("Error fetching expense notifications:", error.message);
     } else if (data) {
       setRequests(data);
     }
@@ -55,7 +54,7 @@ export default function PendingApprovals() {
     fetchRequests();
 
     const channel = supabase
-      .channel('pending-approvals-realtime')
+      .channel('pending-expense-approvals-realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications' },
@@ -68,121 +67,79 @@ export default function PendingApprovals() {
     };
   }, [supabase]);
 
-  const handleApproval = async (notification: NotificationItem, approved: boolean) => {
+  const handleApproval = async (notification: ExpenseNotificationItem, approved: boolean) => {
     const details = notification.details;
-    if (!details || !details.bill_id || !details.user_id) {
-      alert("Invalid notification metadata.");
+    if (!details || !details.expense_id || !details.user_id) {
+      alert("Invalid expense notification metadata.");
       return;
     }
 
-    const targetId = details.bill_id;
+    const targetExpenseId = details.expense_id;
 
     try {
       const submittedAmount = Number(details.amount) || 0;
 
       if (approved) {
-        // 1. Fetch payer's bill share row by unique identifiers
-        const { data: payerShare, error: payerShareError } = await supabase
-          .from("bill_shares")
-          .select("id, shared_amount, amount, paid_amount, receipt_url, payment_method")
-          .eq("bill_id", targetId)
+        const { data: expenseShare, error: shareError } = await supabase
+          .from("expense_shares")
+          .select("id, shared_amount, paid_amount, receipt_url, payment_method")
+          .eq("expense_id", targetExpenseId)
           .eq("boarder_id", details.user_id)
           .maybeSingle();
 
-        if (payerShareError || !payerShare || !payerShare.id) {
-          throw new Error(`Could not find payer bill share record: ${payerShareError?.message}`);
+        if (shareError || !expenseShare || !expenseShare.id) {
+          throw new Error(`Could not find expense share record: ${shareError?.message}`);
         }
 
-        const shareRowId = payerShare.id;
-
-        // 2. Compute amounts securely
-        const totalShareAmount = Number(payerShare.shared_amount || payerShare.amount || 0);
-        const existingPaidAmount = Number(payerShare.paid_amount || 0);
+        const totalShareAmount = Number(expenseShare.shared_amount || 0);
+        const existingPaidAmount = Number(expenseShare.paid_amount || 0);
         
-        const amountToCreditToShare = Math.min(submittedAmount, totalShareAmount - existingPaidAmount);
-        const totalPaidSoFar = existingPaidAmount + amountToCreditToShare;
-        
+        const amountToCredit = Math.min(submittedAmount, totalShareAmount - existingPaidAmount);
+        const totalPaidSoFar = existingPaidAmount + amountToCredit;
         const remainingBalance = totalShareAmount - totalPaidSoFar;
         const isNowFullyPaid = remainingBalance <= 0;
 
-        // 3. Fetch parent bill details to get description
-        const { data: billData } = await supabase
-          .from("bills")
-          .select("*")
-          .eq("id", targetId)
-          .maybeSingle();
+        const { error: updateError } = await supabase
+          .from("expense_shares")
+          .update({
+            is_paid: isNowFullyPaid,
+            status: isNowFullyPaid ? 'paid' : 'partial',
+            paid_amount: totalPaidSoFar,
+            receipt_url: details.receipt_url || expenseShare.receipt_url,
+            payment_method: details.method || expenseShare.payment_method || 'cash',
+            approved_at: new Date().toISOString()
+          })
+          .eq("id", expenseShare.id);
 
-        // 4. Update bill_shares with paid_amount and description (no total_amount)
-        const updatePayload = {
-          is_paid: isNowFullyPaid,
-          status: isNowFullyPaid ? 'paid' : 'partial',
-          paid_amount: totalPaidSoFar,
-          description: billData?.description || notification.message || null,
-          receipt_url: details.receipt_url || payerShare.receipt_url,
-          payment_method: details.method || payerShare.payment_method || 'cash',
-          approved_at: new Date().toISOString()
-        };
-
-        const { error: updatePayerError } = await supabase
-          .from("bill_shares")
-          .update(updatePayload)
-          .eq("id", shareRowId);
-
-        if (updatePayerError) {
-          throw new Error(`Failed to update bill share: ${updatePayerError.message}`);
-        }
-
-        // 5. Insert transaction history using paid_amount and description
-        const transactionPayload = {
-          original_bill_id: targetId,
-          description: billData?.description || notification.message || "Approved Bill Payment",
-          paid_amount: submittedAmount,
-          billing_period_start: billData?.billing_period_start || null,
-          billing_period_end: billData?.billing_period_end || null,
-          calculation_type: billData?.calculation_type || null,
-          settled_at: new Date().toISOString(),
-          url_receipt: details.receipt_url || null,
-          payment_receiver_id: billData?.payment_receiver_id || details.receiver_id || null,
-          payment_receiver: billData?.payment_receiver || null,
-          payer_id: details.user_id || null,
-          source_type: "Approve_bill_payment"
-        };
-
-        const { error: historyError } = await supabase
-          .from("transaction_history")
-          .insert([transactionPayload]);
-
-        if (historyError) {
-          throw new Error(`Failed to insert transaction history: ${historyError.message}`);
+        if (updateError) {
+          throw new Error(`Failed to update expense share: ${updateError.message}`);
         }
 
       } else {
-        // Rejection path
-        const { data: payerShare } = await supabase
-          .from("bill_shares")
+        const { data: expenseShare } = await supabase
+          .from("expense_shares")
           .select("id")
-          .eq("bill_id", targetId)
+          .eq("expense_id", targetExpenseId)
           .eq("boarder_id", details.user_id)
           .maybeSingle();
 
-        if (payerShare?.id) {
+        if (expenseShare?.id) {
           const { error: rejectError } = await supabase
-            .from("bill_shares")
+            .from("expense_shares")
             .update({
               status: 'unpaid',
               paid_amount: 0,
               receipt_url: null,
               is_paid: false
             })
-            .eq("id", payerShare.id);
+            .eq("id", expenseShare.id);
 
           if (rejectError) {
-            throw new Error(`Failed to reject payment: ${rejectError.message}`);
+            throw new Error(`Failed to reject expense payment: ${rejectError.message}`);
           }
         }
       }
 
-      // 6. Update Notification Status
       const { error: notifError } = await supabase
         .from("notifications")
         .update({ status: approved ? 'approved' : 'rejected' })
@@ -193,33 +150,28 @@ export default function PendingApprovals() {
       }
 
       setRequests((prev) => prev.filter((req) => req.id !== notification.id));
-
-      alert(approved ? "Payment approved successfully! Transaction recorded." : "Payment rejected.");
+      alert(approved ? "Expense payment approved successfully!" : "Expense payment rejected.");
       
       fetchRequests();
       router.refresh();
-      window.dispatchEvent(new Event('billing-updated'));
+      window.dispatchEvent(new Event('expense-updated'));
       window.dispatchEvent(new Event('transaction-updated'));
 
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error("Error processing approval:", errorMessage);
+      console.error("Error processing expense approval:", errorMessage);
       alert("Action failed: " + errorMessage);
     }
   };
 
-  if (loading) {
-    return <div className="text-xs text-gray-500 py-2">Loading pending requests...</div>;
-  }
-
-  if (requests.length === 0) {
+  if (loading || requests.length === 0) {
     return null;
   }
 
   return (
     <>
       <Card className="w-full bg-[#1a1a1a] border border-[#ff8c00] text-white p-4 space-y-4 shadow-xl">
-        <h3 className="text-md font-bold text-[#ff8c00]">Pending Payment Approvals ({requests.length})</h3>
+        <h3 className="text-md font-bold text-[#ff8c00]">Pending Expense Payment Approvals ({requests.length})</h3>
        
         <div className="space-y-3">
           {requests.map((req) => (
@@ -250,13 +202,13 @@ export default function PendingApprovals() {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <Button
+                <Button 
                   onClick={() => handleApproval(req, true)}
                   className="bg-green-600 hover:bg-green-700 text-white text-xs h-8 px-3 cursor-pointer flex items-center gap-1"
                 >
                   <CheckCircle2 size={14} /> Approve
                 </Button>
-                <Button
+                <Button 
                   onClick={() => handleApproval(req, false)}
                   className="bg-red-600 hover:bg-red-700 text-white text-xs h-8 px-3 cursor-pointer flex items-center gap-1"
                 >

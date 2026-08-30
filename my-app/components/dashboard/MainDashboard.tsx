@@ -3,9 +3,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, History, Plane, ChevronRight, Sun, Moon, FileText, Receipt, X, Edit2, Users, LogOut } from "lucide-react";
+import { Loader2, History, Plane, ChevronRight, FileText, Receipt, X, Edit2, Users, LogOut, Lock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardHeader from "./DashboardHeader"; 
 import { BillSummary } from "../billing/BillSummary";
@@ -28,7 +27,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   // Desktop hover state for push-drawer layout
   const [isDesktopDrawerOpen, setIsDesktopDrawerOpen] = useState(false);
 
-  const [profile, setProfile] = useState<{ username: string; id?: string; role?: string } | null>(null);
+  const [profile, setProfile] = useState<{ username: string; id?: string; role?: string; avatar_url?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Touch tracking refs for swipe-to-open gesture
@@ -45,7 +44,6 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
   const [userPaymentRequests, setUserPaymentRequests] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const supabase = createClient();
 
@@ -124,7 +122,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
       if (user && user.id) {
         const { data } = await supabase
           .from("profiles")
-          .select("username, id, role")
+          .select("username, id, role, avatar_url")
           .eq("id", user.id)
           .maybeSingle();
           
@@ -134,7 +132,8 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
           setProfile({ 
             username: user.email?.split('@')[0] || "User", 
             id: user.id, 
-            role: role || "Boarder" 
+            role: role || "Boarder",
+            avatar_url: undefined
           });
         }
       }
@@ -196,8 +195,8 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-[#F0F2F5] dark:bg-zinc-950 transition-colors">
-        <Loader2 className="animate-spin text-[#4B49AC] dark:text-amber-500" size={48} />
+      <div className="flex justify-center items-center h-screen bg-[#F0F2F5]">
+        <Loader2 className="animate-spin text-[#4B49AC]" size={48} />
       </div>
     );
   }
@@ -208,7 +207,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
   return (
     <div 
-      className="min-h-screen bg-[#F0F2F5] dark:bg-zinc-950 transition-colors relative overflow-x-hidden flex"
+      className="min-h-screen bg-[#F0F2F5] transition-colors relative overflow-x-hidden flex text-slate-900"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -216,60 +215,51 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
       
       {activeUserId && <RoleListenerModal currentUserId={activeUserId} />}
 
-      {/* MOBILE TRIGGER EDGE HANDLE */}
-      <div 
-        onClick={() => setIsMobileNavOpen(true)}
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-30 lg:hidden flex items-center justify-center bg-white/40 dark:bg-zinc-900/45 backdrop-blur-md border-y border-r border-white/60 dark:border-zinc-700/60 rounded-r-2xl py-6 px-2 shadow-xl shadow-black/10 cursor-pointer hover:w-8 transition-all duration-200 group"
-        title="Swipe or click to open menu"
-      >
-        <div className="flex items-center -space-x-1.5 text-[#4B49AC] dark:text-amber-500">
-          <ChevronRight size={16} strokeWidth={3} className="group-hover:translate-x-0.5 transition-transform" />
-          <ChevronRight size={16} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
-        </div>
-      </div>
-
       {/* DESKTOP HOVER TRIGGER ZONE */}
       <div 
-        className="hidden lg:block fixed left-0 top-0 w-20 h-full z-30"
+        className="hidden lg:block fixed left-0 top-0 w-6 h-full z-30"
         onMouseEnter={() => setIsDesktopDrawerOpen(true)}
       />
 
       {/* DESKTOP PUSH-DRAWER NAVIGATION PANEL */}
       <div 
-        className={`hidden lg:flex flex-col justify-between fixed left-0 top-0 h-full w-80 bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-xl shadow-2xl z-40 p-5 border-r border-slate-200/80 dark:border-zinc-800 transition-transform duration-300 ease-in-out ${isDesktopDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`hidden lg:flex flex-col justify-between fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl shadow-2xl z-40 p-5 border-r border-slate-200 transition-transform duration-300 ease-in-out ${isDesktopDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
         onMouseLeave={() => setIsDesktopDrawerOpen(false)}
       >
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-amber-500/10 dark:text-amber-500 flex items-center justify-center font-bold">
-                {profile?.username ? profile.username.charAt(0).toUpperCase() : 'V'}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-[#4B49AC]/10 text-[#4B49AC] flex items-center justify-center font-bold text-sm shadow-inner overflow-hidden relative">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  profile?.username ? profile.username.charAt(0).toUpperCase() : 'V'
+                )}
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{profile?.username}</p>
+                <p className="text-xs font-bold text-slate-900">{profile?.username}</p>
                 <p className="text-[10px] text-slate-400 capitalize">{userRole}</p>
               </div>
             </div>
-            <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 px-2 py-0.5 rounded-full font-medium">Drawer</span>
+            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">Menu</span>
           </div>
 
           <div className="space-y-1">
             <button 
               onClick={() => setIsEditProfileOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer border border-slate-200/70 bg-slate-50/60 shadow-xs"
             >
-              <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
-                <Edit2 size={15} /> Edit Profile
+              <div className="flex items-center gap-3 text-[#4B49AC]">
+                <Edit2 size={16} /> Edit Profile
               </div>
               <ChevronRight size={14} className="text-slate-400" />
             </button>
 
-            {/* Available to everyone now, actions restricted inside modal */}
             <button 
               onClick={() => setIsUserManagementOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer mt-1"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer mt-1"
             >
-              <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+              <div className="flex items-center gap-3 text-[#4B49AC]">
                 <Users size={16} /> User Management
               </div>
               <ChevronRight size={14} className="text-slate-400" />
@@ -281,9 +271,9 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
             
             <button 
               onClick={() => setIsVacationModalOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+              <div className="flex items-center gap-3 text-[#4B49AC]">
                 <Plane size={16} /> Vacation Requests
               </div>
               <ChevronRight size={14} className="text-slate-400" />
@@ -291,41 +281,31 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
             <button 
               onClick={() => setIsHistoryModalOpen(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer"
             >
-              <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+              <div className="flex items-center gap-3 text-[#4B49AC]">
                 <History size={16} /> Transaction History
               </div>
               <ChevronRight size={14} className="text-slate-400" />
             </button>
-
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
-                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />} Toggle Theme
-              </div>
-              <span className="text-[10px] text-slate-400 capitalize">{theme || 'light'}</span>
-            </button>
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-zinc-800 pt-3 pb-1">
+        <div className="border-t border-slate-100 pt-3 pb-1">
           <button 
             onClick={async () => {
               await supabase.auth.signOut();
               router.push('/auth');
               router.refresh();
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-red-600 hover:bg-red-500/10 transition cursor-pointer"
+            className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-medium text-red-600 hover:bg-red-500/10 transition cursor-pointer"
           >
             <LogOut size={16} /> Logout
           </button>
         </div>
       </div>
 
-      <div className={`flex-1 p-4 md:p-6 space-y-6 transition-all duration-300 ease-in-out ${isDesktopDrawerOpen ? 'lg:ml-80' : 'lg:ml-0'}`}>
+      <div className={`flex-1 p-4 sm:p-6 space-y-6 transition-all duration-300 ease-in-out ${isDesktopDrawerOpen ? 'lg:ml-72' : 'lg:ml-0'}`}>
         
         <DashboardHeader 
           title={isAdmin ? "Admin Dashboard" : "User Dashboard"}
@@ -340,25 +320,29 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         {isMobileNavOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex">
             <div 
-              className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity" 
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" 
               onClick={() => setIsMobileNavOpen(false)}
             />
 
-            <div className="relative w-80 bg-white/90 dark:bg-[#18181b]/90 backdrop-blur-xl h-full shadow-2xl z-10 p-5 flex flex-col justify-between animate-in slide-in-from-left duration-200 border-r border-white/20 dark:border-zinc-800">
+            <div className="relative w-80 bg-white/95 backdrop-blur-2xl h-full shadow-2xl z-10 p-5 flex flex-col justify-between animate-in slide-in-from-left duration-200 border-r border-white/20">
               <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#4B49AC]/10 text-[#4B49AC] dark:bg-amber-500/10 dark:text-amber-500 flex items-center justify-center font-bold">
-                      {profile?.username ? profile.username.charAt(0).toUpperCase() : 'V'}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-[#4B49AC]/10 text-[#4B49AC] flex items-center justify-center font-bold text-sm shadow-inner overflow-hidden relative">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        profile?.username ? profile.username.charAt(0).toUpperCase() : 'V'
+                      )}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">{profile?.username}</p>
+                      <p className="text-xs font-bold text-slate-900">{profile?.username}</p>
                       <p className="text-[10px] text-slate-400 capitalize">{userRole}</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsMobileNavOpen(false)}
-                    className="p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                    className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl cursor-pointer transition"
                   >
                     <X size={18} />
                   </button>
@@ -367,20 +351,19 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
                 <div className="space-y-1">
                   <button 
                     onClick={() => { setIsMobileNavOpen(false); setIsEditProfileOpen(true); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40"
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer border border-slate-200/70 bg-slate-50/60 shadow-xs"
                   >
-                    <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
-                      <Edit2 size={15} /> Edit Profile
+                    <div className="flex items-center gap-3 text-[#4B49AC]">
+                      <Edit2 size={16} /> Edit Profile
                     </div>
                     <ChevronRight size={14} className="text-slate-400" />
                   </button>
 
-                  {/* Available to everyone */}
                   <button 
                     onClick={() => { setIsMobileNavOpen(false); setIsUserManagementOpen(true); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer mt-1"
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer mt-1"
                   >
-                    <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+                    <div className="flex items-center gap-3 text-[#4B49AC]">
                       <Users size={16} /> User Management
                     </div>
                     <ChevronRight size={14} className="text-slate-400" />
@@ -392,9 +375,9 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
                   
                   <button 
                     onClick={() => { setIsMobileNavOpen(false); setIsVacationModalOpen(true); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                   >
-                    <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+                    <div className="flex items-center gap-3 text-[#4B49AC]">
                       <Plane size={16} /> Vacation Requests
                     </div>
                     <ChevronRight size={14} className="text-slate-400" />
@@ -402,27 +385,17 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
 
                   <button 
                     onClick={() => { setIsMobileNavOpen(false); setIsHistoryModalOpen(true); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                    className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                   >
-                    <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
+                    <div className="flex items-center gap-3 text-[#4B49AC]">
                       <History size={16} /> Transaction History
                     </div>
                     <ChevronRight size={14} className="text-slate-400" />
                   </button>
-
-                  <button 
-                    onClick={() => { setTheme(theme === 'dark' ? 'light' : 'dark'); }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5 text-[#4B49AC] dark:text-amber-500">
-                      {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />} Toggle Theme
-                    </div>
-                    <span className="text-[10px] text-slate-400 capitalize">{theme || 'light'}</span>
-                  </button>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 dark:border-zinc-800 pt-3 pb-1">
+              <div className="border-t border-slate-100 pt-3 pb-1">
                 <button 
                   onClick={async () => {
                     setIsMobileNavOpen(false);
@@ -430,7 +403,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
                     router.push('/auth');
                     router.refresh();
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-red-600 hover:bg-red-500/10 transition cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-medium text-red-600 hover:bg-red-500/10 transition cursor-pointer"
                 >
                   <LogOut size={16} /> Logout
                 </button>
@@ -439,7 +412,7 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
           </div>
         )}
 
-        {/* User Management Modal Component - pass userRole as prop */}
+        {/* User Management Modal Component */}
         <UserManagementModal 
           isOpen={isUserManagementOpen} 
           onClose={() => setIsUserManagementOpen(false)} 
@@ -456,10 +429,10 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         {/* Add Expense Form Modal */}
         {isAddFormOpen && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
-            <div className="bg-[#F0F2F5] dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-zinc-800 w-full max-w-md shadow-2xl h-[85vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
-              <div className="w-12 h-1.5 bg-slate-300 dark:bg-zinc-700 rounded-full mx-auto my-3 sm:hidden shrink-0" />
+            <div className="bg-[#F0F2F5] text-slate-900 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 w-full max-w-md shadow-2xl h-[85vh] sm:max-h-[85vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
+              <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-3 sm:hidden shrink-0" />
               <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                <h2 className="text-xl font-bold text-[#4B49AC] dark:text-amber-500 mb-4">Add New Expense</h2>
+                <h2 className="text-xl font-bold text-[#4B49AC] mb-4">Add New Expense</h2>
                 <ExpenseForm 
                   onSuccess={handleCloseAddModal} 
                   onCancel={handleCloseAddModal} 
@@ -472,8 +445,8 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         {/* History Modal */}
         {isHistoryModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
-            <div className="bg-[#F0F2F5] dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-zinc-800 w-full max-w-4xl shadow-2xl relative h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
-              <div className="w-12 h-1.5 bg-slate-300 dark:bg-zinc-700 rounded-full mx-auto my-3 sm:hidden shrink-0" />
+            <div className="bg-[#F0F2F5] text-slate-900 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 w-full max-w-4xl shadow-2xl relative h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
+              <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-3 sm:hidden shrink-0" />
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-transparent">
                 <HistoryTab onBack={() => setIsHistoryModalOpen(false)} />
               </div>
@@ -484,8 +457,8 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         {/* Vacation Summary Modal */}
         {isVacationModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
-            <div className="bg-[#F0F2F5] dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 dark:border-zinc-800 w-full max-w-3xl shadow-2xl relative h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
-              <div className="w-12 h-1.5 bg-slate-300 dark:bg-zinc-700 rounded-full mx-auto my-3 sm:hidden shrink-0" />
+            <div className="bg-[#F0F2F5] text-slate-900 rounded-t-3xl sm:rounded-2xl border-t sm:border border-slate-200 w-full max-w-3xl shadow-2xl relative h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden transition-colors animate-in slide-in-from-bottom duration-200">
+              <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-3 sm:hidden shrink-0" />
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-transparent">
                 <VacationSummaryModal onBack={() => setIsVacationModalOpen(false)} />
               </div>
@@ -497,14 +470,14 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         <section className="transition-all duration-300 mt-0">
           <div className="space-y-6">
             <Tabs defaultValue="bills" className="w-full">
-              <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto scrollbar-none">
+              <div className="w-full border-b border-slate-200 mb-6 overflow-x-auto scrollbar-none">
                 <TabsList variant="line" className="w-full min-w-max justify-center space-x-8 md:space-x-12 px-2">
-                  <TabsTrigger value="bills" className="cursor-pointer gap-2 px-1 text-sm md:text-base">
+                  <TabsTrigger value="bills" className="cursor-pointer gap-2 px-1 text-sm md:text-base font-medium">
                     <FileText className="h-4 w-4 md:h-5 md:w-5" />
                     <span>Monthly Bills</span>
                   </TabsTrigger>
                   
-                  <TabsTrigger value="expenses" className="cursor-pointer gap-2 px-1 text-sm md:text-base">
+                  <TabsTrigger value="expenses" className="cursor-pointer gap-2 px-1 text-sm md:text-base font-medium">
                     <Receipt className="h-4 w-4 md:h-5 md:w-5" />
                     <span>Expenses & Misc</span>
                   </TabsTrigger>
@@ -529,19 +502,16 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
               </TabsContent>
 
               <TabsContent value="expenses" className="space-y-6 focus-visible:outline-none">
-                <div className="w-full">
-                  <ExpenseSummary 
-                    userRole={userRole}
-                    currentUserId={activeUserId}
-                    userId={activeUserId}
-                    profiles={profilesList}
-                    expenses={expenses}
-                    expenseSharesMap={expenseSharesMap}
-                    userPaymentRequests={userPaymentRequests}
-                    isMounted={isMounted}
-                    fetchData={fetchData}
-                    deleteExpense={handleDeleteExpense}
-                  />
+                <div className="w-full flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center shadow-inner">
+                    <Lock size={28} />
+                  </div>
+                  <div className="space-y-1 max-w-sm">
+                    <h3 className="text-lg font-bold text-slate-900">Feature Not Yet Available</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      The Expenses & Misc tracking tab is currently under maintenance and will be available in an upcoming system update.
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

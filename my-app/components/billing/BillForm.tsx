@@ -51,7 +51,7 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
   });
 
   const supabase = createClient();
-  const inputStyles = "w-full bg-slate-50 dark:bg-[#111111] border border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white rounded-md p-2 text-sm focus:border-[#4B49AC] dark:focus:border-[#ff8c00] focus:ring-1 focus:ring-[#4B49AC] dark:focus:ring-[#ff8c00] outline-none transition-all";
+  const inputStyles = "w-full bg-white border border-slate-300 text-slate-900 rounded-md p-2 text-sm focus:border-[#4B49AC] focus:ring-1 focus:ring-[#4B49AC] outline-none transition-all";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -334,82 +334,82 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
     : "0.00";
 
   return (
-    <div className="text-slate-900 dark:text-white pb-20">
-      <div className="flex items-center justify-between mb-4 px-1 border-b border-slate-200 dark:border-[#333] pb-3">
+    <div className="bg-white text-slate-900 pb-20">
+      <div className="flex items-center justify-between mb-4 px-1 border-b border-slate-200 pb-3">
         <div>
           <h3 className="font-semibold text-sm">
             {step === 1 ? "Step 1: Bill Information" : "Step 2: Participants & Split"}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-gray-400">
+          <p className="text-xs text-slate-500">
             {step === 1 ? "Enter basic details, amount, and dates." : "Choose who splits and reviews the share."}
           </p>
         </div>
         <div className="flex items-center gap-1 text-xs font-semibold">
-          <span className={`px-2 py-1 rounded-full ${step === 1 ? 'bg-[#4B49AC] dark:bg-[#ff8c00] text-white dark:text-black' : 'bg-slate-200 dark:bg-[#222] text-slate-500'}`}>1</span>
+          <span className={`px-2 py-1 rounded-full ${step === 1 ? 'bg-[#4B49AC] text-white' : 'bg-slate-200 text-slate-500'}`}>1</span>
           <span className="text-slate-400">-</span>
-          <span className={`px-2 py-1 rounded-full ${step === 2 ? 'bg-[#4B49AC] dark:bg-[#ff8c00] text-white dark:text-black' : 'bg-slate-200 dark:bg-[#222] text-slate-500'}`}>2</span>
+          <span className={`px-2 py-1 rounded-full ${step === 2 ? 'bg-[#4B49AC] text-white' : 'bg-slate-200 text-slate-500'}`}>2</span>
         </div>
       </div>
 
       {step === 1 ? (
         <form onSubmit={handleNextStep} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Description</label>
+            <label className="text-sm font-medium text-slate-700 block mb-1">Description</label>
             <Input 
               value={formData.description} 
               onChange={e => setFormData({...formData, description: e.target.value})} 
-              className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white focus:border-[#4B49AC] dark:focus:border-[#ff8c00]" 
+              className="bg-white border-slate-300 text-slate-900 focus:border-[#4B49AC]" 
               placeholder="e.g. Internet Bill - June"
               required
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Calculation Type</label>
+            <label className="text-sm font-medium text-slate-700 block mb-1">Calculation Type</label>
             <select 
               value={formData.calculationType} 
               onChange={(e) => setFormData({...formData, calculationType: e.target.value})}
               className={inputStyles}
             >
-              <option value="prorated" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Prorated (Based on presence / days around)</option>
-              <option value="fixed" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Fixed Split (Evenly divided)</option>
+              <option value="prorated" className="bg-white text-slate-900">Prorated (Based on presence / days around)</option>
+              <option value="fixed" className="bg-white text-slate-900">Fixed Split (Evenly divided)</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">From</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">From</label>
               <Input 
                 type="date" 
                 value={formData.from} 
                 onChange={e => setFormData({...formData, from: e.target.value})} 
-                className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white w-full" 
+                className="bg-white border-slate-300 text-slate-900 w-full" 
                 required={formData.calculationType === 'prorated'} 
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">To</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1">To</label>
               <Input 
                 type="date" 
                 value={formData.to} 
                 onChange={e => setFormData({...formData, to: e.target.value})} 
-                className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white w-full" 
+                className="bg-white border-slate-300 text-slate-900 w-full" 
                 required={formData.calculationType === 'prorated'} 
               />
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Payment Receiver</label>
+            <label className="text-sm font-medium text-slate-700 block mb-1">Payment Receiver</label>
             <select 
               value={formData.receiverId} 
               onChange={(e) => setFormData({...formData, receiverId: e.target.value})} 
               className={inputStyles}
               required
             >
-              <option value="" disabled className="bg-white dark:bg-[#1a1a1a] text-gray-400">Select receiver</option>
+              <option value="" disabled className="bg-white text-gray-400">Select receiver</option>
               {profiles.map(p => (
-                <option key={p.id} value={p.id} className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">
+                <option key={p.id} value={p.id} className="bg-white text-slate-900">
                   {p.username}
                 </option>
               ))}
@@ -417,22 +417,22 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Total Amount (₱)</label>
+            <label className="text-sm font-medium text-slate-700 block mb-1">Total Amount (₱)</label>
             <Input 
               type="number" 
               step="0.01" 
               value={formData.amount} 
               onChange={e => setFormData({...formData, amount: e.target.value})} 
-              className="bg-slate-50 dark:bg-[#111111] border-slate-300 dark:border-[#333333] text-slate-900 dark:text-white w-full" 
+              className="bg-white border-slate-300 text-slate-900 w-full" 
               placeholder="0.00" 
               required 
             />
           </div>
 
-          <div className="fixed sm:relative bottom-0 left-0 right-0 bg-white/95 dark:bg-[#181818]/95 backdrop-blur sm:bg-transparent p-3 sm:p-0 border-t sm:border-t-0 border-slate-200 dark:border-[#333] flex gap-3 z-20">
+          <div className="fixed sm:relative bottom-0 left-0 right-0 bg-white/95 backdrop-blur sm:bg-transparent p-3 sm:p-0 border-t sm:border-t-0 border-slate-200 flex gap-3 z-20">
             <Button 
               type="submit" 
-              className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer h-10"
+              className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] text-white font-bold cursor-pointer h-10"
             >
               Next
             </Button>
@@ -441,7 +441,7 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
                 type="button" 
                 variant="ghost" 
                 onClick={onCancel}
-                className="text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white cursor-pointer h-10 px-4"
+                className="text-slate-500 hover:text-slate-900 cursor-pointer h-10 px-4"
               >
                 Cancel
               </Button>
@@ -451,21 +451,21 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-gray-300 block mb-1">Bill Participants</label>
+            <label className="text-sm font-medium text-slate-700 block mb-1">Bill Participants</label>
             <select 
               value={shareMode} 
               onChange={(e) => handleShareModeChange(e.target.value as "all" | "custom")}
               className={inputStyles}
             >
-              <option value="all" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">All Boarders (Everyone shares)</option>
-              <option value="custom" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Custom (Select specific participants)</option>
+              <option value="all" className="bg-white text-slate-900">All Boarders (Everyone shares)</option>
+              <option value="custom" className="bg-white text-slate-900">Custom (Select specific participants)</option>
             </select>
           </div>
 
           {shareMode === 'custom' && (
             <div className="space-y-2">
-              <label className="text-xs text-slate-500 dark:text-gray-400 block font-medium">Select who will share this bill:</label>
-              <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-2 bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-[#333333] rounded-md shadow-inner">
+              <label className="text-xs text-slate-500 block font-medium">Select who will share this bill:</label>
+              <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-md shadow-inner">
                 {profiles.map(p => {
                   const isChecked = selectedMembers.includes(p.id);
                   return (
@@ -474,15 +474,15 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
                       onClick={() => toggleMember(p.id)}
                       className={`flex items-center gap-2 p-2.5 rounded cursor-pointer border text-xs transition ${
                         isChecked 
-                          ? 'bg-[#4B49AC]/10 dark:bg-[#ff8c00]/10 border-[#4B49AC] dark:border-[#ff8c00] text-slate-900 dark:text-white' 
-                          : 'bg-white dark:bg-[#181818] border-slate-200 dark:border-[#222222] text-slate-500 dark:text-gray-400'
+                          ? 'bg-[#4B49AC]/10 border-[#4B49AC] text-slate-900' 
+                          : 'bg-white border-slate-200 text-slate-500'
                       }`}
                     >
                       <input 
                         type="checkbox" 
                         checked={isChecked} 
                         onChange={() => {}} 
-                        className="accent-[#4B49AC] dark:accent-[#ff8c00] cursor-pointer"
+                        className="accent-[#4B49AC] cursor-pointer"
                       />
                       <span className="truncate font-medium">{p.username}</span>
                     </div>
@@ -492,27 +492,27 @@ export default function BillForm({ initialData, profiles: propProfiles, onSucces
             </div>
           )}
 
-          <div className="bg-slate-100 dark:bg-[#111] p-3 rounded-lg border border-slate-200 dark:border-[#333] text-xs space-y-1 text-slate-600 dark:text-gray-400">
-            <div>Total Bill Amount: <span className="font-bold text-slate-900 dark:text-white">₱{parseFloat(formData.amount || "0").toFixed(2)}</span></div>
-            <div>Selected Participants Count: <span className="font-bold text-slate-900 dark:text-white">{membersCount}</span></div>
-            <div className="pt-1 border-t border-slate-200 dark:border-[#222]">
-              Estimated Base Share Due per person: <span className="text-[#4B49AC] dark:text-[#ff8c00] font-bold">₱{estimatedShare}</span>
+          <div className="bg-slate-100 p-3 rounded-lg border border-slate-200 text-xs space-y-1 text-slate-600">
+            <div>Total Bill Amount: <span className="font-bold text-slate-900">₱{parseFloat(formData.amount || "0").toFixed(2)}</span></div>
+            <div>Selected Participants Count: <span className="font-bold text-slate-900">{membersCount}</span></div>
+            <div className="pt-1 border-t border-slate-200">
+              Estimated Base Share Due per person: <span className="text-[#4B49AC] font-bold">₱{estimatedShare}</span>
             </div>
           </div>
 
-          <div className="fixed sm:relative bottom-0 left-0 right-0 bg-white/95 dark:bg-[#181818]/95 backdrop-blur sm:bg-transparent p-3 sm:p-0 border-t sm:border-t-0 border-slate-200 dark:border-[#333] flex gap-3 z-20">
+          <div className="fixed sm:relative bottom-0 left-0 right-0 bg-white/95 backdrop-blur sm:bg-transparent p-3 sm:p-0 border-t sm:border-t-0 border-slate-200 flex gap-3 z-20">
             <Button 
               type="button" 
               variant="outline"
               onClick={() => setStep(1)}
-              className="px-4 border-slate-300 dark:border-[#333] text-slate-700 dark:text-gray-300 cursor-pointer h-10"
+              className="px-4 border-slate-300 text-slate-700 cursor-pointer h-10"
             >
               Back
             </Button>
             <Button 
               type="submit" 
               disabled={loading}
-              className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold cursor-pointer h-10"
+              className="flex-1 bg-[#4B49AC] hover:bg-[#3f3dc9] text-white font-bold cursor-pointer h-10"
             >
               {loading ? "Saving..." : isEditing ? "Save Changes" : "Submit Bill"}
             </Button>

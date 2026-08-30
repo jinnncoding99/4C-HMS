@@ -1,3 +1,4 @@
+// components/modals/UserManagementModal.tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -43,7 +44,6 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
   const fetchUsers = async () => {
     const { data } = await supabase.from("profiles").select("*");
     if (data) {
-      // Filter out the system placeholder so it doesn't show up in the management UI
       const activeUsers = data.filter(u => u.id !== '00000000-0000-0000-0000-000000000000');
       setUsers(activeUsers);
     }
@@ -67,7 +67,7 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
       console.error("Error updating role:", error.message);
       toast.error("Failed to update role. Please try again.");
     } else {
-      toast.success(`User role updated successfully!`);
+      toast.success("User role updated successfully!");
       fetchUsers();
     }
     setLoadState(null);
@@ -81,8 +81,6 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
     setUserToDelete(null);
 
     try {
-      // Deleting the profile automatically shifts related financial history 
-      // to the 'Unknown Member' placeholder via ON DELETE SET DEFAULT constraints.
       const { error: profileError } = await supabase
         .from("profiles")
         .delete()
@@ -121,21 +119,21 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-[9999] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 z-[9999] overflow-y-auto">
       {/* Modal Container */}
-      <div className="bg-white dark:bg-[#18181b] w-full max-w-5xl rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col h-[90vh] max-h-[850px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white w-full max-w-5xl rounded-3xl border border-slate-200 shadow-2xl flex flex-col h-[90vh] max-h-[850px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50 shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">User Management</h2>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+            <h2 className="text-xl font-bold text-slate-900">User Management</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
               {isAdmin ? "Manage permissions, roles, and profiles across your space." : "View active system members and roles."}
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition-colors cursor-pointer"
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -146,32 +144,32 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
           
           {/* Summary Statistics Cards */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 shrink-0">
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Total</p>
-                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-slate-900 dark:text-white">{totalCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Total</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-slate-900">{totalCount}</h3>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
                 <Users size={18} />
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Admins</p>
-                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-amber-600 dark:text-amber-500">{adminCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Admins</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-amber-600">{adminCount}</h3>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
                 <Shield size={18} />
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/50 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-2">
               <div>
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Boarders</p>
-                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-indigo-600 dark:text-indigo-400">{boarderCount}</h3>
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">Boarders</p>
+                <h3 className="text-lg sm:text-2xl font-black mt-0.5 text-indigo-600">{boarderCount}</h3>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
                 <UserIcon size={18} />
               </div>
             </div>
@@ -186,20 +184,20 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                 placeholder="Search users by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4B49AC] dark:focus:ring-amber-500 text-sm"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4B49AC] text-sm"
               />
             </div>
             
             <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-              <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800">
+              <div className="flex gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 {(["all", "admin", "boarder"] as const).map((role) => (
                   <button
                     key={role}
                     onClick={() => setRoleFilter(role)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition cursor-pointer ${
                       roleFilter === role 
-                        ? "bg-[#4B49AC] dark:bg-amber-500 text-white dark:text-black shadow-xs" 
-                        : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-[#4B49AC] text-white shadow-xs" 
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     {role}
@@ -207,17 +205,17 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                 ))}
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl border border-slate-200 dark:border-zinc-800">
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button 
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-white dark:bg-zinc-800 text-[#4B49AC] dark:text-amber-500 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-white text-[#4B49AC] shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Grid View"
                 >
                   <LayoutGrid size={16} />
                 </button>
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-white dark:bg-zinc-800 text-[#4B49AC] dark:text-amber-500 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-white text-[#4B49AC] shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
                   title="List View"
                 >
                   <List size={16} />
@@ -231,9 +229,9 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
-              className="text-center py-16 bg-slate-50 dark:bg-zinc-900/40 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800"
+              className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200"
             >
-              <p className="text-slate-500 dark:text-zinc-400 font-medium text-sm">No users found matching your filters.</p>
+              <p className="text-slate-500 font-medium text-sm">No users found matching your filters.</p>
             </motion.div>
           ) : (
             <motion.div 
@@ -256,7 +254,7 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.2 }}
-                      className={`bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xs hover:shadow-md transition-all ${
+                      className={`bg-white border border-slate-200 shadow-2xs hover:shadow-md transition-all ${
                         viewMode === 'grid' 
                           ? 'p-4 rounded-2xl flex flex-col justify-between gap-4 text-center items-center' 
                           : 'p-3 sm:p-4 rounded-2xl flex flex-row items-center justify-between gap-3'
@@ -264,7 +262,7 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                     >
                       {/* Avatar & User Info */}
                       <div className={`flex ${viewMode === 'grid' ? 'flex-col items-center' : 'flex-row items-center'} gap-3 w-full min-w-0`}>
-                        <div className={`${viewMode === 'grid' ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full text-lg' : 'w-10 h-10 rounded-xl text-sm'} bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 flex items-center font-bold justify-center shrink-0 overflow-hidden`}>
+                        <div className={`${viewMode === 'grid' ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full text-lg' : 'w-10 h-10 rounded-xl text-sm'} bg-[#4B49AC]/10 text-[#4B49AC] flex items-center font-bold justify-center shrink-0 overflow-hidden`}>
                           {user.avatar_url ? (
                             <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
                           ) : (
@@ -273,16 +271,16 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                         </div>
                         
                         <div className={`min-w-0 flex-1 flex flex-col ${viewMode === 'grid' ? 'items-center' : 'items-start'}`}>
-                          <h4 className={`font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5 w-full ${viewMode === 'grid' ? 'justify-center' : 'justify-start'}`}>
+                          <h4 className={`font-bold text-slate-900 text-sm flex items-center gap-1.5 w-full ${viewMode === 'grid' ? 'justify-center' : 'justify-start'}`}>
                             <span className="truncate">{user.username}</span>
                             {user.id === currentUserId && (
-                              <span className="text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 px-1.5 py-0.5 rounded-md font-medium shrink-0">(You)</span>
+                              <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium shrink-0">(You)</span>
                             )}
                           </h4>
                           <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 ${
                             isUserAdmin 
-                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
-                              : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                              ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' 
+                              : 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20'
                           }`}>
                             {isUserAdmin ? <Shield size={10} /> : <UserIcon size={10} />}
                             {isUserAdmin ? 'Admin' : 'Boarder'}
@@ -294,13 +292,13 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
                       {isAdmin && (
                         <div className={`flex items-center gap-2 ${
                           viewMode === 'grid' 
-                            ? 'w-full pt-4 border-t border-slate-100 dark:border-zinc-800 flex-row justify-center' 
+                            ? 'w-full pt-4 border-t border-slate-100 flex-row justify-center' 
                             : 'shrink-0'
                         }`}>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className={`text-xs border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold cursor-pointer h-8 shadow-none ${viewMode === 'grid' ? 'flex-1 px-0' : 'px-3'}`}
+                            className={`text-xs border-slate-200 hover:bg-slate-100 font-semibold cursor-pointer h-8 shadow-none ${viewMode === 'grid' ? 'flex-1 px-0' : 'px-3'}`}
                             disabled={loading === user.id}
                             onClick={() => setUserToModify({ id: user.id, role: user.role, username: user.username })}
                           >
@@ -330,20 +328,20 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
 
       {/* Confirmation Sub-Modal for Role Change */}
       {isAdmin && userToModify && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
-          <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 w-full max-w-sm text-center shadow-2xl space-y-4">
-            <ShieldAlert className="mx-auto text-[#4B49AC] dark:text-amber-500" size={40} />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 w-full max-w-sm text-center shadow-2xl space-y-4">
+            <ShieldAlert className="mx-auto text-[#4B49AC]" size={40} />
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Confirm Role Change</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+              <h3 className="text-lg font-bold text-slate-900">Confirm Role Change</h3>
+              <p className="text-xs text-slate-500 mt-1">
                 Are you sure you want to change <strong>{userToModify.username}&apos;s</strong> role?
               </p>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={executeRoleUpdate} className="flex-1 bg-[#4B49AC] dark:bg-amber-500 hover:opacity-90 text-white dark:text-black font-bold cursor-pointer shadow-none text-xs">
+              <Button onClick={executeRoleUpdate} className="flex-1 bg-[#4B49AC] hover:opacity-90 text-white font-bold cursor-pointer shadow-none text-xs">
                 Confirm
               </Button>
-              <Button variant="ghost" onClick={() => setUserToModify(null)} className="flex-1 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer text-xs">
+              <Button variant="ghost" onClick={() => setUserToModify(null)} className="flex-1 text-slate-500 hover:text-slate-900 cursor-pointer text-xs">
                 Cancel
               </Button>
             </div>
@@ -353,12 +351,12 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
 
       {/* Confirmation Sub-Modal for User Deletion */}
       {isAdmin && userToDelete && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
-          <div className="bg-white dark:bg-[#18181b] p-6 rounded-2xl border border-red-500/40 w-full max-w-sm text-center shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-[10000]">
+          <div className="bg-white p-6 rounded-2xl border border-red-500/40 w-full max-w-sm text-center shadow-2xl space-y-4">
             <Trash2 className="mx-auto text-red-500" size={40} />
             <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Delete User</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+              <h3 className="text-lg font-bold text-slate-900">Delete User</h3>
+              <p className="text-xs text-slate-500 mt-1">
                 Are you sure you want to completely delete <strong>{userToDelete.username}</strong>? Their historical transactions will be safely reassigned to Unknown Member.
               </p>
             </div>
@@ -366,7 +364,7 @@ export default function UserManagementModal({ isOpen = false, onClose, userRole 
               <Button onClick={executeUserDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold cursor-pointer shadow-none text-xs">
                 Delete
               </Button>
-              <Button variant="ghost" onClick={() => setUserToDelete(null)} className="flex-1 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer text-xs">
+              <Button variant="ghost" onClick={() => setUserToDelete(null)} className="flex-1 text-slate-500 hover:text-slate-900 cursor-pointer text-xs">
                 Cancel
               </Button>
             </div>

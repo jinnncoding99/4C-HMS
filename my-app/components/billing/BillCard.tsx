@@ -73,53 +73,53 @@ export const BillCard = ({
     userPaymentRequests.some((req) => req.details?.bill_id === bill.id);
 
   return (
-    <div className="p-4 border border-slate-200 dark:border-[#333] rounded-lg bg-white dark:bg-[#111111] space-y-3 shadow-sm transition-colors relative">
+    <div className="p-4 border border-slate-200 rounded-lg bg-white space-y-3 shadow-sm transition-colors relative">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-bold text-lg text-slate-900 dark:text-white">{bill.description}</p>
+            <p className="font-bold text-lg text-slate-900">{bill.description}</p>
             {allOthersPaid && (
-              <span className="text-[10px] bg-emerald-500/10 dark:bg-green-500/20 border border-emerald-500 dark:border-green-500 text-emerald-600 dark:text-green-400 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-[10px] bg-emerald-500/10 border border-emerald-500 text-emerald-600 font-semibold px-2 py-0.5 rounded-full">
                 All Shares Collected
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Billing Period: {bill.billing_period_start || 'N/A'} to {bill.billing_period_end || 'N/A'} ({totalDays} Days) • Type:{' '}
             <span className="capitalize">{bill.calculation_type || 'prorated'}</span>
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-xs text-slate-500 dark:text-gray-400">Total Bill Due</p>
-          <p className="font-bold text-xl text-[#4B49AC] dark:text-[#ff8c00]">₱{totalBillAmount.toFixed(2)}</p>
+          <p className="text-xs text-slate-500">Total Bill Due</p>
+          <p className="font-bold text-xl text-[#4B49AC]">₱{totalBillAmount.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-slate-100 dark:border-[#222]">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-slate-100">
         <div>
-          <p className="text-xs text-slate-500 dark:text-gray-400">Your Share Due:</p>
-          <p className="text-md font-bold text-slate-900 dark:text-white">
+          <p className="text-xs text-slate-500">Your Share Due:</p>
+          <p className="text-md font-bold text-slate-900">
             {isPaymentReceiver ? (
               allOthersPaid ? (
                 isMySharePaid ? (
-                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                  <span className="text-emerald-600 font-semibold">₱0.00 (Paid)</span>
                 ) : (
                   `₱${userShareDue.toFixed(2)}`
                 )
               ) : (
-                <span className="text-[#4B49AC] dark:text-[#ff8c00]">
+                <span className="text-[#4B49AC]">
                   ₱{userShareDue.toFixed(2)} <span className="text-[10px] font-normal text-slate-500">(Base + Collected: ₱{totalCollectedFromOthers.toFixed(2)})</span>
                 </span>
               )
             ) : (
               myBreakdown ? (
                 isMySharePaid ? (
-                  <span className="text-emerald-600 dark:text-green-500 font-semibold">₱0.00 (Paid)</span>
+                  <span className="text-emerald-600 font-semibold">₱0.00 (Paid)</span>
                 ) : (
                   `₱${userShareDue.toFixed(2)}`
                 )
               ) : (
-                <span className="text-slate-400 dark:text-gray-500 italic text-xs">Not included in this bill</span>
+                <span className="text-slate-400 italic text-xs">Not included in this bill</span>
               )
             )}
           </p>
@@ -130,7 +130,7 @@ export const BillCard = ({
             isReceiverFullyAccumulated ? (
               <Button
                 onClick={() => onSettleBill(bill)}
-                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
               >
                 Mark as Settled
               </Button>
@@ -138,13 +138,13 @@ export const BillCard = ({
           ) : (
             myBreakdown && userShareDue > 0 && !isMySharePaid && !isDanz && (
               hasPendingSubmission ? (
-                <span className="text-xs text-amber-600 dark:text-yellow-500 font-semibold bg-amber-500/10 dark:bg-yellow-500/10 border border-amber-500/30 dark:border-yellow-500/30 px-3 py-1.5 rounded-md">
+                <span className="text-xs text-amber-600 font-semibold bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-md">
                   Pending Approval
                 </span>
               ) : (
                 <Button
                   onClick={() => onPayNow(bill, userShareDue)}
-                  className="bg-[#4B49AC] hover:bg-[#3f3dc9] dark:bg-[#ff8c00] dark:hover:bg-[#e67e00] text-white dark:text-black font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
+                  className="bg-[#4B49AC] hover:bg-[#3f3dc9] text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-sm"
                 >
                   Pay Now
                 </Button>
@@ -164,7 +164,7 @@ export const BillCard = ({
                       e.stopPropagation();
                       onEditBill(bill);
                     }}
-                    className="text-blue-600 dark:text-blue-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                    className="text-blue-600 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-blue-50"
                     title="Edit Bill"
                   >
                     <Edit size={16} />
@@ -178,7 +178,7 @@ export const BillCard = ({
                       e.stopPropagation();
                       setShowDeleteConfirm(true);
                     }}
-                    className="text-red-600 dark:text-red-400 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50 dark:hover:bg-red-500/10"
+                    className="text-red-600 h-9 px-2 text-xs flex items-center gap-1 cursor-pointer hover:bg-red-50"
                     title="Delete Bill"
                   >
                     <Trash2 size={16} />
@@ -192,11 +192,11 @@ export const BillCard = ({
       </div>
 
       {showDeleteConfirm && (
-        <div className="absolute inset-0 bg-white/95 dark:bg-[#111111]/95 backdrop-blur-sm z-30 p-4 rounded-lg flex flex-col justify-center items-center text-center space-y-3 border border-red-500/30 animate-fadeIn">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-30 p-4 rounded-lg flex flex-col justify-center items-center text-center space-y-3 border border-red-500/30 animate-fadeIn">
+          <p className="text-sm font-semibold text-slate-900">
             Are you sure you want to delete <span className="text-red-500">"{bill.description}"</span>?
           </p>
-          <p className="text-xs text-slate-500 dark:text-gray-400">
+          <p className="text-xs text-slate-500">
             This action is irreversible and will remove all participant shares.
           </p>
           <div className="flex items-center gap-2 mt-2">
@@ -217,7 +217,7 @@ export const BillCard = ({
               variant="outline"
               size="sm"
               onClick={() => setShowDeleteConfirm(false)}
-              className="border-slate-300 dark:border-[#333] text-slate-700 dark:text-gray-300 text-xs h-8 px-4 cursor-pointer"
+              className="border-slate-300 text-slate-700 text-xs h-8 px-4 cursor-pointer"
             >
               Cancel
             </Button>
@@ -228,7 +228,7 @@ export const BillCard = ({
       <div className="pt-2">
         <button
           onClick={() => onToggleExpand(bill.id)}
-          className="text-xs text-[#4B49AC] dark:text-[#ff8c00] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
+          className="text-xs text-[#4B49AC] flex items-center gap-1 hover:underline font-semibold focus:outline-none cursor-pointer"
         >
           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           {isExpanded ? "Hide Member Breakdown & Days" : `See More Info (Member Shares & Prorated Days) • ${normalizedBreakdown.length} Participants`}

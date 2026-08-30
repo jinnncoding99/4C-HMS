@@ -170,7 +170,6 @@ export default function ExpensePaymentModal({
       }
 
       if (isDirectSettlement) {
-        // Insert into history log first
         const { error: historyError } = await supabase.from('transaction_history').insert([{
           source_type: 'expense',
           original_expense_id: expense.id,
@@ -189,7 +188,6 @@ export default function ExpensePaymentModal({
           console.error("Failed to write to transaction_history:", historyError);
         }
 
-        // Delete the master expense record completely from the database.
         const { error: deleteExpenseError } = await supabase
           .from('expenses')
           .delete()
@@ -203,7 +201,7 @@ export default function ExpensePaymentModal({
         toast.success("Expense successfully settled and removed!");
       } else {
         const notificationPayload = {
-          type: 'expense_approval',
+          type: 'expense_payment_approval', // MATCHED: Aligned with PendingExpenseApprovals query filter
           email: user.email || 'User',
           message: `Payment submitted for expense: ${expense.description} via ${paymentMethod.toUpperCase()} amount: ₱${parsedAmount.toFixed(2)}`,
           status: 'pending',
@@ -211,10 +209,9 @@ export default function ExpensePaymentModal({
             expense_id: expense.id,
             user_id: user.id,
             receiver_id: expense.payment_receiver_id || null,
-            amount: parsedAmount,
+            amount: parsedAmount.toString(), // string format to match interface expectation
             method: paymentMethod,
-            receipt_url: receiptUrl,
-            source_type: 'expense_approval' // Updated here to expense_approval
+            receipt_url: receiptUrl
           }
         };
 

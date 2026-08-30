@@ -168,16 +168,16 @@ export const BillSummary = ({
   if (!isMounted) return null;
 
   return (
-    <div className="w-full space-y-6 text-slate-900 dark:text-zinc-100">
-      <Card className="bg-white dark:bg-[#18181b] border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 shadow-xl overflow-hidden rounded-xl transition-colors">
+    <div className="w-full space-y-6 text-slate-900">
+      <Card className="bg-white border-slate-200 text-slate-800 shadow-xl overflow-hidden rounded-xl transition-colors">
         <div className="p-4 sm:p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-zinc-800/80 pb-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
-              <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <FileText className="h-5 w-5 text-[#4B49AC] dark:text-amber-500" />
+              <h3 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[#4B49AC]" />
                 Monthly Bills
               </h3>
-              <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 Track recurring monthly entries, validate partial or full payments, and automatically manage shared boarder balances.
               </p>
             </div>
@@ -196,43 +196,43 @@ export const BillSummary = ({
 
           {/* Top Summary Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-500 shrink-0">
+            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 text-[#4B49AC] shrink-0">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Active Bills</p>
-                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">{activeBillsCount}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">Active Bills</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900">{activeBillsCount}</p>
               </div>
             </div>
 
-            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 dark:bg-amber-500/10 text-[#4B49AC] dark:text-amber-400 shrink-0">
+            <div className="p-3 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#4B49AC]/10 text-[#4B49AC] shrink-0">
                 <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Pending Collection</p>
-                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">₱{totalPendingCollection.toFixed(2)}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">Pending Collection</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900 truncate">₱{totalPendingCollection.toFixed(2)}</p>
               </div>
             </div>
 
-            <div className="col-span-2 lg:col-span-1 p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 flex items-center gap-3">
-              <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-green-400 shrink-0">
+            <div className="col-span-2 lg:col-span-1 p-3 sm:p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">Total Collected</p>
-                <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">₱{totalCollected.toFixed(2)}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">Total Collected</p>
+                <p className="text-base sm:text-lg font-bold text-slate-900 truncate">₱{totalCollected.toFixed(2)}</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             {displayBills.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800">
-                <FileText className="h-10 w-10 text-slate-400 dark:text-zinc-600 mx-auto mb-3" />
-                <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">No active monthly bills found.</p>
-                <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">All shared monthly bills have been completely settled.</p>
+              <div className="text-center py-12 bg-slate-55 rounded-xl border border-dashed border-slate-200">
+                <FileText className="h-10 w-10 text-slate-400 mx-auto mb-3" />
+                <p className="text-sm font-medium text-slate-700">No active monthly bills found.</p>
+                <p className="text-xs text-slate-400 mt-1">All shared monthly bills have been completely settled.</p>
               </div>
             ) : (
               displayBills.map((bill: any) => {
@@ -283,9 +283,9 @@ export const BillSummary = ({
             )}
           </div>
 
-          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center">
-            <span className="text-sm sm:text-base font-semibold text-slate-600 dark:text-zinc-300">Total Outstanding Due:</span>
-            <span className="text-xl sm:text-2xl font-bold text-[#4B49AC] dark:text-amber-500">₱{totalDue.toFixed(2)}</span>
+          <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+            <span className="text-sm sm:text-base font-semibold text-slate-600">Total Outstanding Due:</span>
+            <span className="text-xl sm:text-2xl font-bold text-[#4B49AC]">₱{totalDue.toFixed(2)}</span>
           </div>
         </div>
       </Card>
