@@ -15,6 +15,7 @@ import HistoryTab from "@/components/dashboard/HistoryTab";
 import VacationSummaryModal from "@/components/dashboard/VacationSummaryModal";
 import UserManagementModal from "@/components/dashboard/UserManagementModal";
 import EditProfileModal from "@/components/dashboard/EditProfileModal";
+import FloatingChatWidget from "@/components/chat/FloatingChatWidget"; // <-- Import the new widget
 
 export default function MainDashboard({ userId, role }: { userId?: string; role?: string }) {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -519,6 +520,9 @@ export default function MainDashboard({ userId, role }: { userId?: string; role?
         </section>
 
       </div>
+
+      {/* Floating Active Avatars & Chat Widget */}
+      <FloatingChatWidget currentUserId={activeUserId} />
     </div>
   );
 }
