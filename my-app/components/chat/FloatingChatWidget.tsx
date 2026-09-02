@@ -55,7 +55,6 @@ export default function FloatingChatWidget({ currentUserId }: { currentUserId?: 
           return [...prev, enrichedMessage];
         });
 
-        // Trigger unread notification badge if the message is relevant to you and widget is closed
         const isMe = payload.new.sender_id === currentUserId;
         const msgRecipient = payload.new.recipient_id ? String(payload.new.recipient_id).trim() : null;
         const current = String(currentUserId).trim();
@@ -91,7 +90,7 @@ export default function FloatingChatWidget({ currentUserId }: { currentUserId?: 
 
   useEffect(() => {
     if (isOpen) {
-      setHasUnread(false); // Clear badge when opened
+      setHasUnread(false);
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen, selectedDmUser]);
@@ -123,9 +122,14 @@ export default function FloatingChatWidget({ currentUserId }: { currentUserId?: 
     }
   };
 
+  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+
   const uniqueMessages = Array.from(
     new Map(messages.map(msg => [msg.id, msg])).values()
-  );
+  ).filter(msg => {
+    const messageTime = new Date(msg.created_at).getTime();
+    return messageTime > twentyFourHoursAgo;
+  });
 
   const filteredMessages = uniqueMessages.filter((msg) => {
     const msgRecipient = msg.recipient_id ? String(msg.recipient_id).trim() : null;
@@ -213,10 +217,13 @@ export default function FloatingChatWidget({ currentUserId }: { currentUserId?: 
                 ) : (
                   filteredMessages.map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
+                    const senderProfile = profiles.find(p => p.id === msg.sender_id);
+                    const senderName = senderProfile?.username || msg.profiles?.username || 'Member';
+
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        <span className="text-[10px] text-slate-400 mb-0.5 px-1">
-                          {isMe ? 'You' : msg.profiles?.username || 'Boarder'}
+                        <span className="text-[10px] text-slate-400 mb-0.5 px-1 font-semibold">
+                          {isMe ? 'You' : senderName}
                         </span>
                         <div
                           className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-xs leading-relaxed shadow-xs ${
